@@ -18,7 +18,6 @@ clear: clear-tensorboard clear-train-data
 
 build-memory: clear-memory-build memory_scratcher.o
 	g++ -shared -o dll/MemoryScratcher.dll dll/memory_scratcher.o
-
 memory_scratcher.o:
 	g++ -c -fPIC memory/MemoryScratcher.cpp -o dll/memory_scratcher.o
 	
