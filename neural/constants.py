@@ -1,8 +1,6 @@
 import threading
 import numpy as np
 
-GOSU_WEBSOCKET_URL = "ws://localhost:24050/ws"
-
 EXIT_KEY = 'q'
 TRAIN_KEY = '+'
 

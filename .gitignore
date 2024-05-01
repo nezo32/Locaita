@@ -6,3 +6,4 @@ __pycache__
 locAIna
 tensorboard/events*
 tmp/*.npy
+*.exe

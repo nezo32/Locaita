@@ -1,17 +1,15 @@
 import cv2
 import win32con
-import threading
-import asyncio
 import time
-import osu
 import numpy as np
 from win32 import win32api
+import threading
+import argparse
 from agent import Agent
 from env import Environment
 from buffer import ReplayBuffer
 from constants import MARGIN_LEFT, MARGIN_TOP, PLAYGROUND_WIDTH, PLAYGROUND_HEIGHT, THREAD_CLOSE_EVENT, REWARD_PRICE, ACTIONS_COUNT
-import argparse
-
+from memory.functions import GetOsuHandle, CloseOsuHandle
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--load-models', default=False, action=argparse.BooleanOptionalAction)
@@ -58,7 +56,7 @@ def calculateReward(hits, currentHits):
     diff = currentArray - hitsArray
     return np.sum(diff * REWARD_PRICE)
     
-async def main():
+def main():
     global TRAIN_FLAG, END_FLAG, ACTIONS_COUNT, args
     
     memory = ReplayBuffer(64)
@@ -66,8 +64,6 @@ async def main():
     
     if (args.load_models):
         agent.load_models()
-        
-    osuClient = await osu.OsuClient()
     
     def save_data():
         print('\n... saving data ...')
@@ -91,7 +87,7 @@ async def main():
         image, _ = Environment.grabScreen((MARGIN_LEFT, MARGIN_TOP, PLAYGROUND_WIDTH, PLAYGROUND_HEIGHT))
         mousePosition = Environment.grabMousePosition()
         mousePress = Environment.getMousePressState()
-        osuState = await osu.GetState(osuClient)
+        osuState = None
         inGameState = osuState["menu"]["state"]
         
         if (TRAIN_FLAG and inGameState == 2):
@@ -129,7 +125,7 @@ async def main():
 
 if __name__=='__main__':
     try:
-        asyncio.run(main())
+        main()
     finally:
         print("Exiting program. Clearing threads...\n")
         cv2.destroyAllWindows()

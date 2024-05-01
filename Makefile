@@ -1,4 +1,4 @@
-play-nomodel: clear
+play-init: clear build-memory
 	python neural/main.py
 play: clear-train-data
 	python neural/main.py --load-models
@@ -13,10 +13,10 @@ clear-train-data:
 	powershell rm tmp/*
 clear-memory-build:
 	powershell rm dll/*
-clear: clear-tensorboard clear-train-data
+clear: clear-tensorboard clear-train-data clear-memory-build
 	powershell rm models/*
 
-build-memory: clear-memory-build memory_scratcher.o
+build-memory: memory_scratcher.o
 	g++ -shared -o dll/MemoryScratcher.dll dll/memory_scratcher.o
 memory_scratcher.o:
 	g++ -c -fPIC memory/MemoryScratcher.cpp -o dll/memory_scratcher.o
