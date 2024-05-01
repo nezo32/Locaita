@@ -17,5 +17,9 @@ extern "C"
     __declspec(dllexport) uint64_t GetBaseRulesetsAddress(HANDLE);
     __declspec(dllexport) Hits *GetHitsData(HANDLE, uint64_t);
     __declspec(dllexport) void ClearHitsData(Hits *);
+    __declspec(dllexport) int GetH300(Hits *data);
+    __declspec(dllexport) int GetH100(Hits *data);
+    __declspec(dllexport) int GetH50(Hits *data);
+    __declspec(dllexport) int GetHMiss(Hits *data);
     __declspec(dllexport) __declspec(dllexport) BOOL CloseOsuHandle(HANDLE);
 }

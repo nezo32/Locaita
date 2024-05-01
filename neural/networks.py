@@ -11,7 +11,7 @@ class ActorNetwork:
         self.image_shape = image_shape
         self.outputs_count = outputs_count
         self.network = self.__build()
-        plot_model(self.network, to_file='../architecture/actorExtractor.png', show_shapes=True, show_layer_names=True)
+        plot_model(self.network, to_file='./architecture/actorExtractor.png', show_shapes=True, show_layer_names=True)
     
     def __build(self):
         image_input = Input(self.image_shape)
@@ -53,7 +53,7 @@ class CriticNetwork:
     def __init__(self, image_shape):
         self.image_shape = image_shape
         self.network = self.__build()
-        plot_model(self.network, to_file='../architecture/criticExtractor.png', show_shapes=True, show_layer_names=True)
+        plot_model(self.network, to_file='./architecture/criticExtractor.png', show_shapes=True, show_layer_names=True)
     
     def __build(self):
         # state

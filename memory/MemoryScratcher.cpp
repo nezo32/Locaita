@@ -220,6 +220,23 @@ __declspec(dllexport) Hits *GetHitsData(HANDLE process, uint64_t baseRulesetsAdd
     return hitsReturn;
 }
 
+__declspec(dllexport) int GetH300(Hits *data)
+{
+    return data->h300;
+}
+__declspec(dllexport) int GetH100(Hits *data)
+{
+    return data->h100;
+}
+__declspec(dllexport) int GetH50(Hits *data)
+{
+    return data->h50;
+}
+__declspec(dllexport) int GetHMiss(Hits *data)
+{
+    return data->hMiss;
+}
+
 __declspec(dllexport) void ClearHitsData(Hits *data)
 {
     delete data;

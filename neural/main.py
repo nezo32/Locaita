@@ -6,12 +6,15 @@ import numpy as np
 from win32 import win32api
 import threading
 import argparse
-import memory.functions as mem
 from agent import Agent
 from env import Environment
 from buffer import ReplayBuffer
 from constants import MARGIN_LEFT, MARGIN_TOP, PLAYGROUND_WIDTH, PLAYGROUND_HEIGHT, THREAD_CLOSE_EVENT, REWARD_PRICE, ACTIONS_COUNT
-from memory.functions import GetOsuHandle, CloseOsuHandle
+
+import sys
+sys.path.append('./memory')
+from functions import GetOsuHandle, CloseOsuHandle, GetBaseRulesetsAddress, GetHitsData, ClearHitsData, GetH300, GetH100, GetH50, GetHMiss
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--load-models', default=False, action=argparse.BooleanOptionalAction)
@@ -61,7 +64,7 @@ def calculateReward(hits, currentHits):
 def main(handle):
     global TRAIN_FLAG, END_FLAG, ACTIONS_COUNT, args
     
-    baseAddress = mem.GetBaseRulesetsAddress(handle)
+    baseAddress = GetBaseRulesetsAddress(handle)
     
     memory = ReplayBuffer(64)
     agent = Agent(ACTIONS_COUNT, (202, 260, 1), memory)
@@ -85,7 +88,7 @@ def main(handle):
     print('RSHIFT start training loop (need to be in map)')
     print('NUMPAD5 save data and exit the program\n')
     
-    hitsCounter = (0, 0, 0, 0, 0)
+    hitsCounter = (0, 0, 0, 0)
     print('\n... starting main loop ...')
     while True:
         image, _ = Environment.grabScreen((MARGIN_LEFT, MARGIN_TOP, PLAYGROUND_WIDTH, PLAYGROUND_HEIGHT))
@@ -100,18 +103,21 @@ def main(handle):
             Environment.step(actions)
             
             # Reward
-            hits = mem.GetHitsData(handle, baseAddress)
-            currentHits = (hits.contents.h300, hits.contents.h100, hits.contents.h50, hits.contents.hMiss)
+            hits = GetHitsData(handle, baseAddress)
+            currentHits = (GetH300(hits), GetH100(hits), GetH50(hits), GetHMiss(hits))
             reward = calculateReward(hitsCounter, currentHits)
-            print(currentHits)
             
             # Store memory
             memory.store_memory(image, mousePosition, mousePress, actions, log_prob, value, reward)
 
             # Save current & clear memory
             hitsCounter = tuple(currentHits)
-            mem.ClearHitsData(ctypes.byref(hits))
+            ClearHitsData(hits)
             
+        
+        if (cv2.waitKey(1) & 0xFF) == ord('q'):
+            cv2.destroyAllWindows()
+            break
         
         if END_FLAG:
             save_data()
@@ -132,11 +138,11 @@ def main(handle):
         
 
 if __name__=='__main__':
-    handle = mem.GetOsuHandle()
+    handle = GetOsuHandle()
     try:
         main(handle)
     finally:
         print("Exiting program. Clearing threads...\n")
-        mem.CloseOsuHandle(handle)
+        CloseOsuHandle(handle)
         cv2.destroyAllWindows()
         THREAD_CLOSE_EVENT.set()
