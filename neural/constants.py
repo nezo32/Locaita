@@ -13,6 +13,6 @@ MARGIN_TOP = 45
 MARGIN_LEFT = 310
 
 ACTIONS_COUNT = 3
-REWARD_PRICE = np.asarray([50, -10, -40, -100, -100], dtype=np.int8)
+REWARD_PRICE = np.asarray([100, -10, -40, -100], dtype=np.int8)
 
 THREAD_CLOSE_EVENT = threading.Event()

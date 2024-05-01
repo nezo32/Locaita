@@ -1,3 +1,4 @@
+import ctypes
 import cv2
 import win32con
 import time
@@ -5,6 +6,7 @@ import numpy as np
 from win32 import win32api
 import threading
 import argparse
+import memory.functions as mem
 from agent import Agent
 from env import Environment
 from buffer import ReplayBuffer
@@ -56,8 +58,10 @@ def calculateReward(hits, currentHits):
     diff = currentArray - hitsArray
     return np.sum(diff * REWARD_PRICE)
     
-def main():
+def main(handle):
     global TRAIN_FLAG, END_FLAG, ACTIONS_COUNT, args
+    
+    baseAddress = mem.GetBaseRulesetsAddress(handle)
     
     memory = ReplayBuffer(64)
     agent = Agent(ACTIONS_COUNT, (202, 260, 1), memory)
@@ -87,23 +91,27 @@ def main():
         image, _ = Environment.grabScreen((MARGIN_LEFT, MARGIN_TOP, PLAYGROUND_WIDTH, PLAYGROUND_HEIGHT))
         mousePosition = Environment.grabMousePosition()
         mousePress = Environment.getMousePressState()
-        osuState = None
-        inGameState = osuState["menu"]["state"]
         
-        if (TRAIN_FLAG and inGameState == 2):
-            hits = osuState["gameplay"]["hits"]
-            currentHits = (hits["300"], hits["100"], hits["50"], hits["sliderBreaks"], hits["0"])
-
+        #inGameState = osuState["menu"]["state"] TODO: Get osu ingame state
+        
+        if (TRAIN_FLAG):
+            # Action
             actions, log_prob, value = agent.sample_action(image, mousePosition, mousePress)
             Environment.step(actions)
+            
+            # Reward
+            hits = mem.GetHitsData(handle, baseAddress)
+            currentHits = (hits.contents.h300, hits.contents.h100, hits.contents.h50, hits.contents.hMiss)
             reward = calculateReward(hitsCounter, currentHits)
-            print(reward)
+            print(currentHits)
+            
+            # Store memory
             memory.store_memory(image, mousePosition, mousePress, actions, log_prob, value, reward)
 
+            # Save current & clear memory
             hitsCounter = tuple(currentHits)
-
-        if inGameState != 2:
-            hitsCounter = (0, 0, 0, 0, 0)
+            mem.ClearHitsData(ctypes.byref(hits))
+            
         
         if END_FLAG:
             save_data()
@@ -124,9 +132,11 @@ def main():
         
 
 if __name__=='__main__':
+    handle = mem.GetOsuHandle()
     try:
-        main()
+        main(handle)
     finally:
         print("Exiting program. Clearing threads...\n")
+        mem.CloseOsuHandle(handle)
         cv2.destroyAllWindows()
         THREAD_CLOSE_EVENT.set()
