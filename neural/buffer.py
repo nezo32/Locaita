@@ -5,7 +5,7 @@ import calendar
 import time
 
 class ReplayBuffer:
-    def __init__(self, batch_size, save_dir="../tmp/"):
+    def __init__(self, batch_size, save_dir="./tmp/"):
         self.imageStates = []
         self.mousePositionStates = []
         self.mousePressStates = []

@@ -113,11 +113,6 @@ def main(handle):
             # Save current & clear memory
             hitsCounter = tuple(currentHits)
             ClearHitsData(hits)
-            
-        
-        if (cv2.waitKey(1) & 0xFF) == ord('q'):
-            cv2.destroyAllWindows()
-            break
         
         if END_FLAG:
             save_data()

@@ -8,13 +8,16 @@ metrics:
 	tensorboard --logdir=./tensorboard
 
 clear-tensorboard:
-	powershell rm tensorboard/*
+	powershell rm tensorboard/*events*
 clear-train-data:
-	powershell rm tmp/*
+	powershell rm tmp/*.npy
 clear-memory-build:
 	powershell rm dll/*
 clear: clear-tensorboard clear-train-data clear-memory-build
-	powershell rm models/*
+	powershell rm models/checkpoint
+	powershell rm models/actor*
+	powershell rm models/critic*
+
 
 build-memory: memory_scratcher.o
 	g++ -shared -o dll/MemoryScratcher.dll dll/memory_scratcher.o

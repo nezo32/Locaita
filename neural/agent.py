@@ -10,7 +10,7 @@ class Agent:
     def __init__(self, actions_count, image_shape, memory, gamma=0.99,
                  actor_lr = 3e-3, critic_lr = 3e-3,
                  gae_lambda=0.95, policy_clip=0.2,
-                 n_epochs=10, chkpt_dir='../models/'):
+                 n_epochs=10, chkpt_dir='./models/'):
         
         self.gamma = gamma
         self.policy_clip = policy_clip
@@ -26,7 +26,7 @@ class Agent:
         self.actorOptimizer = tf.keras.optimizers.Adam(actor_lr)
         self.criticOptimizer = tf.keras.optimizers.Adam(critic_lr)
         
-        self.tensorboard = tf.summary.create_file_writer("../tensorboard/", name="main")
+        self.tensorboard = tf.summary.create_file_writer("./tensorboard/", name="main")
         self.step = 0
         self.memory: ReplayBuffer = memory
 
