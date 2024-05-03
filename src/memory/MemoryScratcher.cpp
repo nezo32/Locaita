@@ -1,13 +1,6 @@
 #include "MemoryScratcher.h"
 
-// Debugger structs
-typedef struct
-{
-    MEMORY_BASIC_INFORMATION mbi;
-    char info[128];
-} MEMPAGE;
-
-static const SYSTEM_INFO systemInfo = []()
+const SYSTEM_INFO systemInfo = []()
 {
     SYSTEM_INFO si;
     GetSystemInfo(&si);
@@ -157,7 +150,7 @@ __declspec(dllexport) HANDLE GetOsuHandle()
     return process;
 }
 
-__declspec(dllexport) uint64_t GetBaseRulesetsAddress(HANDLE process)
+__declspec(dllexport) SigPage *GetRulesetsSigPage(HANDLE process)
 {
     printf("... querying memory pages ...\n");
     auto pages = QueryMemPages(process);
@@ -167,6 +160,7 @@ __declspec(dllexport) uint64_t GetBaseRulesetsAddress(HANDLE process)
     const char mask[] = "xxx????xx";
 
     uint64_t rulesetsAddress = 0;
+    MEMPAGE *neededPage{};
 
     for (auto &page : pages)
     {
@@ -176,25 +170,84 @@ __declspec(dllexport) uint64_t GetBaseRulesetsAddress(HANDLE process)
             if (result != NULL)
             {
                 printf("Rulesets signature address: %p\n", result);
-                rulesetsAddress = result;
+                neededPage = &page;
                 break;
             }
         }
     }
 
-    return rulesetsAddress;
+    SigPage *sp = new SigPage();
+
+    sp->page = neededPage;
+
+    sp->mask = (char *)malloc(10);
+    sp->signature = (char *)malloc(10);
+
+    memcpy(sp->mask, mask, 10);
+    memcpy(sp->signature, signature, 10);
+
+    return sp;
 }
 
-__declspec(dllexport) Hits *GetHitsData(HANDLE process, uint64_t baseRulesetsAddress)
+__declspec(dllexport) SigPage *GetStatusSigPage(HANDLE process)
 {
-    // Rulesets      7D 15 A1 ?? ?? ?? ?? 85 C0          int16
+    printf("... querying memory pages ...\n");
+    auto pages = QueryMemPages(process);
+
+    printf("... finding status signature ...\n");
+    const char signature[] = "\x48\x83\xf8\x04\x73\x1e";
+    const char mask[] = "xxxxxx";
+
+    uint64_t rulesetsAddress = 0;
+    MEMPAGE *neededPage{};
+
+    for (auto &page : pages)
+    {
+        if (page.mbi.State == MEM_COMMIT)
+        {
+            auto result = FindSignature(process, (uint64_t)page.mbi.BaseAddress, page.mbi.RegionSize, signature, mask);
+            if (result != NULL)
+            {
+                printf("Rulesets signature address: %p\n", result);
+                neededPage = &page;
+                break;
+            }
+        }
+    }
+
+    SigPage *sp = new SigPage();
+
+    sp->page = neededPage;
+
+    sp->mask = (char *)malloc(7);
+    sp->signature = (char *)malloc(7);
+
+    memcpy(sp->mask, mask, 7);
+    memcpy(sp->signature, signature, 7);
+
+    return sp;
+}
+
+__declspec(dllexport) uint64_t GetBaseAddress(HANDLE process, SigPage *sp)
+{
+    return FindSignature(process, (uint64_t)sp->page->mbi.BaseAddress, sp->page->mbi.RegionSize, sp->signature, sp->mask);
+}
+
+__declspec(dllexport) Hits *CreateHitsData()
+{
+    return new Hits();
+}
+
+__declspec(dllexport) Hits *GetHitsData(HANDLE process, uint64_t baseRulesetsAddress, Hits *hitsReturn)
+{
+    // Rulesets      7D 15 A1 ?? ?? ?? ?? 85 C0
     // Ruleset       [[Rulesets - 0xB] + 0x4]
     // Hit300        [[Ruleset + 0x68] + 0x38] + 0x8A    int16
     // Hit100        [[Ruleset + 0x68] + 0x38] + 0x88    int16
     // Hit50         [[Ruleset + 0x68] + 0x38] + 0x8C    int16
     // HitMiss       [[Ruleset + 0x68] + 0x38] + 0x92    int16
-
-    Hits *hitsReturn = new Hits();
+    // Combo         [[Ruleset + 0x68] + 0x38] + 0x94    int16
+    // MaxCombo      [[Ruleset + 0x68] + 0x38] + 0x68    int16
 
     int32_t buffer{};
     size_t readBytes{};
@@ -216,8 +269,26 @@ __declspec(dllexport) Hits *GetHitsData(HANDLE process, uint64_t baseRulesetsAdd
     hitsReturn->h50 = buff;
     ReadProcessMemory(process, (LPBYTE)hits + 0x92, &buff, sizeof(int16_t), &readBytes);
     hitsReturn->hMiss = buff;
+    ReadProcessMemory(process, (LPBYTE)hits + 0x94, &buff, sizeof(int16_t), &readBytes);
+    hitsReturn->combo = buff;
+    ReadProcessMemory(process, (LPBYTE)hits + 0x68, &buff, sizeof(int16_t), &readBytes);
+    hitsReturn->maxCombo = buff;
 
     return hitsReturn;
+}
+
+__declspec(dllexport) uint32_t GetStateData(HANDLE process, uint64_t baseAddress)
+{
+    // Status       48 83 F8 04 73 1E
+    // State        [Status - 0x4]
+
+    uint32_t buffer{};
+    size_t readBytes{};
+
+    ReadProcessMemory(process, (LPBYTE)baseAddress - 0x4, &buffer, sizeof(uint32_t), &readBytes);
+    ReadProcessMemory(process, (LPBYTE)buffer, &buffer, sizeof(uint32_t), &readBytes);
+
+    return buffer;
 }
 
 __declspec(dllexport) int GetH300(Hits *data)
@@ -236,12 +307,25 @@ __declspec(dllexport) int GetHMiss(Hits *data)
 {
     return data->hMiss;
 }
+__declspec(dllexport) int GetCombo(Hits *data)
+{
+    return data->combo;
+}
+__declspec(dllexport) int GetMaxCombo(Hits *data)
+{
+    return data->maxCombo;
+}
 
+__declspec(dllexport) void ClearSigPage(SigPage *sp)
+{
+    free(sp->mask);
+    free(sp->signature);
+    delete sp;
+}
 __declspec(dllexport) void ClearHitsData(Hits *data)
 {
     delete data;
 }
-
 __declspec(dllexport) BOOL CloseOsuHandle(HANDLE pOsu)
 {
     return CloseHandle(pOsu);

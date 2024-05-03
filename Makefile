@@ -1,9 +1,9 @@
 play-init: clear build-memory
-	python neural/main.py
+	python src/main.py
 play: clear-train-data
-	python neural/main.py --load-models
+	python src/main.py --load-models
 train: clear-tensorboard
-	python neural/train.py
+	python src/train.py
 metrics:
 	tensorboard --logdir=./tensorboard
 
@@ -14,7 +14,7 @@ clear-train-data:
 clear-memory-build:
 	powershell rm dll/*
 clear: clear-tensorboard clear-train-data clear-memory-build
-	powershell rm models/checkpoint
+	powershell rm models/checkpoint*
 	powershell rm models/actor*
 	powershell rm models/critic*
 
@@ -22,5 +22,5 @@ clear: clear-tensorboard clear-train-data clear-memory-build
 build-memory: memory_scratcher.o
 	g++ -shared -o dll/MemoryScratcher.dll dll/memory_scratcher.o
 memory_scratcher.o:
-	g++ -c -fPIC memory/MemoryScratcher.cpp -o dll/memory_scratcher.o
+	g++ -c -fPIC src/memory/MemoryScratcher.cpp -o dll/memory_scratcher.o
 	

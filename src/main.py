@@ -1,4 +1,6 @@
-import ctypes
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 import cv2
 import win32con
 import time
@@ -6,14 +8,15 @@ import numpy as np
 from win32 import win32api
 import threading
 import argparse
+from copy import deepcopy
 from agent import Agent
 from env import Environment
 from buffer import ReplayBuffer
-from constants import MARGIN_LEFT, MARGIN_TOP, PLAYGROUND_WIDTH, PLAYGROUND_HEIGHT, THREAD_CLOSE_EVENT, REWARD_PRICE, ACTIONS_COUNT
+from constants import MARGIN_LEFT, MARGIN_TOP, PLAYGROUND_WIDTH, PLAYGROUND_HEIGHT, THREAD_CLOSE_EVENT, REWARD_PRICE
 
-import sys
-sys.path.append('./memory')
-from functions import GetOsuHandle, CloseOsuHandle, GetBaseRulesetsAddress, GetHitsData, ClearHitsData, GetH300, GetH100, GetH50, GetHMiss
+from memory.functions import GetOsuHandle, CloseOsuHandle, GetBaseAddress, GetStateData, \
+                             GetHitsData, ClearHitsData, GetH300, GetH100, GetH50, GetHMiss, \
+                             GetCombo, GetMaxCombo, GetRulesetsSigPage, GetStatusSigPage, ClearSigPage, CreateHitsData
 
 
 parser = argparse.ArgumentParser()
@@ -55,19 +58,43 @@ def keyThread():
             break
 
 
-def calculateReward(hits, currentHits):
-    hitsArray = np.asarray(hits, dtype=np.int32)
-    currentArray = np.asarray(currentHits, dtype=np.int32)
-    diff = currentArray - hitsArray
-    return np.sum(diff * REWARD_PRICE)
+def calculateReward(currentHits, hitsCounter):
+    hitsArray = np.asarray(hitsCounter)
+    currentArray = np.asarray(currentHits)
+    
+    diff = np.subtract(currentArray, hitsArray)
+    
+    reward = diff[0] * REWARD_PRICE[0] + diff[1] * REWARD_PRICE[1] + \
+             diff[2] * REWARD_PRICE[2] + diff[3] * REWARD_PRICE[3] + \
+             diff[4] * REWARD_PRICE[3]
+    
+    return reward
+    
+def getHitsData(hits, hitsCounter, sbCount):
+    h300 = GetH300(hits)
+    h100 = GetH100(hits)
+    h50 = GetH50(hits)
+    hMiss = GetHMiss(hits)
+    combo = GetCombo(hits)
+    maxCombo = GetMaxCombo(hits)
+    
+    if hitsCounter[-1] > maxCombo:
+        hitsCounter[-1] = 0
+    
+    if combo < hitsCounter[-2] and hMiss == hitsCounter[3]:
+        sbCount[0] += 1
+        
+    return [h300, h100, h50, hMiss, sbCount[0], combo, maxCombo]
     
 def main(handle):
-    global TRAIN_FLAG, END_FLAG, ACTIONS_COUNT, args
+    global TRAIN_FLAG, END_FLAG, args
     
-    baseAddress = GetBaseRulesetsAddress(handle)
+    sigPageR = GetRulesetsSigPage(handle)
+    sigPageS = GetStatusSigPage(handle)
+    hits = CreateHitsData()
     
     memory = ReplayBuffer(64)
-    agent = Agent(ACTIONS_COUNT, (202, 260, 1), memory)
+    agent = Agent((202, 260, 1), memory)
     
     if (args.load_models):
         agent.load_models()
@@ -88,31 +115,38 @@ def main(handle):
     print('RSHIFT start training loop (need to be in map)')
     print('NUMPAD5 save data and exit the program\n')
     
-    hitsCounter = (0, 0, 0, 0)
+    hitsCounter = [0, 0, 0, 0, 0, 0, 0]
+    sbCount = [0]
     print('\n... starting main loop ...')
     while True:
+        baseAddressR = GetBaseAddress(handle, sigPageR)
+        baseAddressS = GetBaseAddress(handle, sigPageS)
+        
         image, _ = Environment.grabScreen((MARGIN_LEFT, MARGIN_TOP, PLAYGROUND_WIDTH, PLAYGROUND_HEIGHT))
         mousePosition = Environment.grabMousePosition()
         mousePress = Environment.getMousePressState()
         
-        #inGameState = osuState["menu"]["state"] TODO: Get osu ingame state
+        inGameState = GetStateData(handle, baseAddressS)
         
-        if (TRAIN_FLAG):
+        if (TRAIN_FLAG and inGameState == 2):
             # Action
             actions, log_prob, value = agent.sample_action(image, mousePosition, mousePress)
             Environment.step(actions)
             
             # Reward
-            hits = GetHitsData(handle, baseAddress)
-            currentHits = (GetH300(hits), GetH100(hits), GetH50(hits), GetHMiss(hits))
-            reward = calculateReward(hitsCounter, currentHits)
+            hits = GetHitsData(handle, baseAddressR, hits)
+            currentHits = getHitsData(hits, hitsCounter, sbCount)
+            reward = calculateReward(currentHits, hitsCounter)
             
             # Store memory
             memory.store_memory(image, mousePosition, mousePress, actions, log_prob, value, reward)
 
             # Save current & clear memory
-            hitsCounter = tuple(currentHits)
-            ClearHitsData(hits)
+            hitsCounter = deepcopy(currentHits)
+            
+        else:
+            sbCount = [0]
+            hitsCounter = [0, 0, 0, 0, 0, 0, 0]
         
         if END_FLAG:
             save_data()
@@ -129,7 +163,10 @@ def main(handle):
             save_data()
             memory.clear_memory()
             break
-            
+        
+    ClearHitsData(hits)
+    ClearSigPage(sigPageR)
+    ClearSigPage(sigPageS)      
         
 
 if __name__=='__main__':
@@ -139,5 +176,4 @@ if __name__=='__main__':
     finally:
         print("Exiting program. Clearing threads...\n")
         CloseOsuHandle(handle)
-        cv2.destroyAllWindows()
         THREAD_CLOSE_EVENT.set()

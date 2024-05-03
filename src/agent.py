@@ -7,12 +7,13 @@ from buffer import ReplayBuffer
 from networks import ActorNetwork, CriticNetwork
 
 class Agent:
-    def __init__(self, actions_count, image_shape, memory, gamma=0.99,
-                 actor_lr = 3e-3, critic_lr = 3e-3,
-                 gae_lambda=0.95, policy_clip=0.2,
+    def __init__(self, image_shape, memory, gamma=0.99,
+                 actor_lr = 3e-3, critic_lr = 3e-3, sigma=0,
+                 gae_lambda=0.95, policy_clip=0.2, actions_count=3,
                  n_epochs=10, chkpt_dir='./models/'):
         
         self.gamma = gamma
+        self.sigma = sigma
         self.policy_clip = policy_clip
         self.n_epochs = n_epochs
         self.gae_lambda = gae_lambda
@@ -35,8 +36,8 @@ class Agent:
         mousePosition = np.array([mousePosition])
         mousePress = np.array([mousePress])
         
-        mu, sigma = self.actor.network.predict([image, mousePosition, mousePress])
-        dist = tfp.distributions.Normal(loc=mu, scale=sigma, allow_nan_stats=False)
+        mu = self.actor.network.predict([image, mousePosition, mousePress])
+        dist = tfp.distributions.Normal(loc=mu, scale=self.sigma, allow_nan_stats=False)
         
         actions = dist.sample().numpy()[0]
         log_prob = dist.log_prob(actions).numpy()[0]
@@ -108,18 +109,22 @@ class Agent:
                     self.actorOptimizer.apply_gradients(zip(actor_grads, self.actor.network.trainable_variables))
                     self.criticOptimizer.apply_gradients(zip(critic_grads, self.critic.network.trainable_variables))
                     
-                    
-                    raise Exception("TEST")
-                    
                 
                 with self.tensorboard.as_default():
-                    tf.summary.scalar("loss/actor_kl", tf.reduce_mean(actor_loss), self.step)
+                    tf.summary.scalar("loss/actor", tf.reduce_mean(actor_loss), self.step)
                     tf.summary.scalar("loss/critic", tf.reduce_mean(critic_loss), self.step)
-                    tf.summary.histogram("loss/actor_loss_kl", actor_loss, self.step)
+                    tf.summary.histogram("loss/actor_loss", actor_loss, self.step)
                     tf.summary.histogram("loss/critic_loss", critic_loss, self.step)
+                    
+                    tf.summary.histogram('probs/old', old_probs, self.step)
+                    tf.summary.histogram('probs/new', new_probs, self.step)
+                    tf.summary.histogram('probs/ratio', prob_ratio, self.step)
+                    
 
                     tf.summary.histogram("advantage", advantage[batch], self.step)
                     tf.summary.histogram("values", values[batch], self.step)
+                    tf.summary.histogram("returns", returns, self.step)
+                    
                     tf.summary.scalar("rewards", tf.reduce_mean(rewards_arr[batch]), self.step)
                 self.step += 1
 

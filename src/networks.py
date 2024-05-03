@@ -45,9 +45,9 @@ class ActorNetwork:
         fc = Dense(128)(fc)
         fc = LeakyReLU()(fc)
         mu = Dense(self.outputs_count, activation="tanh")(fc)
-        sigma = Dense(self.outputs_count, activation="softplus")(fc)
         
-        return Model(inputs=[image_input, mouse_position_input, mouse_press_input], outputs=[mu, sigma])
+        
+        return Model(inputs=[image_input, mouse_position_input, mouse_press_input], outputs=mu)
         
 class CriticNetwork:
     def __init__(self, image_shape):

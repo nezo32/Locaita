@@ -69,7 +69,7 @@ class ReplayBuffer:
         
     def load(self, timestamp):
         self.imageStates = load(self.save_dir + 'imageStates_' + timestamp + ".npy")
-        self.mousePositionStates = load(self.save_dir + 'tmp/mousePosition_' + timestamp + ".npy")
+        self.mousePositionStates = load(self.save_dir + 'mousePosition_' + timestamp + ".npy")
         self.mousePressStates = load(self.save_dir + 'mousePressStates_' + timestamp + ".npy")
         self.actions = load(self.save_dir + 'actions_' + timestamp + ".npy")
         self.probs = load(self.save_dir + 'probs_' + timestamp + ".npy")
