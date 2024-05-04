@@ -13,13 +13,11 @@ clear-train-data:
 	powershell rm tmp/*.npy
 clear-memory-build:
 	powershell rm dll/*
-clear: clear-tensorboard clear-train-data clear-memory-build
-	powershell rm models/checkpoint*
-	powershell rm models/actor*
-	powershell rm models/critic*
+clear: clear-tensorboard clear-train-data
+	powershell rm models/checkpoint*, models/actor*, models/critic*
 
 
-build-memory: memory_scratcher.o
+build-memory: clear-memory-build memory_scratcher.o
 	g++ -shared -o dll/MemoryScratcher.dll dll/memory_scratcher.o
 memory_scratcher.o:
 	g++ -c -fPIC src/memory/MemoryScratcher.cpp -o dll/memory_scratcher.o

@@ -8,7 +8,7 @@ from networks import ActorNetwork, CriticNetwork
 
 class Agent:
     def __init__(self, image_shape, memory, gamma=0.99,
-                 actor_lr = 3e-3, critic_lr = 3e-3, sigma=0,
+                 actor_lr = 3e-3, critic_lr = 3e-3, sigma=0.3,
                  gae_lambda=0.95, policy_clip=0.2, actions_count=3,
                  n_epochs=10, chkpt_dir='./models/'):
         
@@ -61,7 +61,9 @@ class Agent:
         print('\n... start training ...')
         start = int(time.time())
         
-        for _ in range(self.n_epochs):
+        ep = self.memory.length() // self.memory.batch_size
+        n = self.n_epochs if ep < self.n_epochs else ep
+        for _ in range(n):
             imageStates_arr, mousePositionStates_arr, mousePressStates_arr, actions_arr, probs_arr, values_arr, rewards_arr, batches = self.memory.generate_batches()
 
             values = values_arr
@@ -84,8 +86,8 @@ class Agent:
                     old_probs = tf.convert_to_tensor(probs_arr[batch])
                     actions = tf.convert_to_tensor(actions_arr[batch])
 
-                    mu, sigma = self.actor.network([images, mousePositions, mousePresses])
-                    dist = tfp.distributions.Normal(loc=mu, scale=sigma)
+                    mu = self.actor.network([images, mousePositions, mousePresses])
+                    dist = tfp.distributions.Normal(loc=mu, scale=self.sigma)
                     new_probs = dist.log_prob(actions)
 
                     critic_value = self.critic.network([images, mousePositions, mousePresses])
@@ -104,7 +106,6 @@ class Agent:
                     
                     actor_grads = tapeActor.gradient(actor_loss, self.actor.network.trainable_variables)
                     critic_grads = tapeCritic.gradient(critic_loss, self.critic.network.trainable_variables)
-
 
                     self.actorOptimizer.apply_gradients(zip(actor_grads, self.actor.network.trainable_variables))
                     self.criticOptimizer.apply_gradients(zip(critic_grads, self.critic.network.trainable_variables))

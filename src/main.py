@@ -66,7 +66,7 @@ def calculateReward(currentHits, hitsCounter):
     
     reward = diff[0] * REWARD_PRICE[0] + diff[1] * REWARD_PRICE[1] + \
              diff[2] * REWARD_PRICE[2] + diff[3] * REWARD_PRICE[3] + \
-             diff[4] * REWARD_PRICE[3]
+             diff[4] * REWARD_PRICE[3] - 0.1
     
     return reward
     
