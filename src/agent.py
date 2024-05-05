@@ -8,7 +8,7 @@ from networks import ActorNetwork, CriticNetwork
 
 class Agent:
     def __init__(self, image_shape, memory, gamma=0.99,
-                 actor_lr = 3e-3, critic_lr = 3e-3, sigma=0.3,
+                 actor_lr = 5e-4, critic_lr = 5e-4, sigma=0.6,
                  gae_lambda=0.95, policy_clip=0.2, actions_count=3,
                  n_epochs=10, chkpt_dir='./models/'):
         

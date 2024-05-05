@@ -55,8 +55,8 @@ class Environment:
         x, y, click = actions
         xx, yy = win32api.GetCursorPos()
         
-        x *= 50
-        y *= 50
+        x *= 75
+        y *= 75
         
         if (xx + x > 1610 or xx + x < 310):
             x = 0
