@@ -130,7 +130,7 @@ def main(handle):
         
         if (TRAIN_FLAG and inGameState == 2):
             # Action
-            actions, log_prob, value = agent.sample_action(image, mousePosition, mousePress)
+            actions, log_prob = agent.sample_action(image, mousePosition, mousePress)
             Environment.step(actions)
             
             # Reward
@@ -139,7 +139,7 @@ def main(handle):
             reward = calculateReward(currentHits, hitsCounter)
             
             # Store memory
-            memory.store_memory(image, mousePosition, mousePress, actions, log_prob, value, reward)
+            memory.store_memory(image, mousePosition, mousePress, actions, log_prob, reward)
 
             # Save current & clear memory
             hitsCounter = deepcopy(currentHits)

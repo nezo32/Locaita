@@ -1,3 +1,6 @@
+import os
+os.environ["TF_GPU_ALLOCATOR"] = "cuda_malloc_async"
+
 import time
 import numpy as np
 import tensorflow as tf
@@ -41,9 +44,8 @@ class Agent:
         
         actions = dist.sample().numpy()[0]
         log_prob = dist.log_prob(actions).numpy()[0]
-        value = self.critic.network.predict([image, mousePosition, mousePress])[0]
         
-        return actions, log_prob, value
+        return actions, log_prob
 
     def save_models(self):
         print('\n... saving models ...')
@@ -61,12 +63,11 @@ class Agent:
         print('\n... start training ...')
         start = int(time.time())
         
-        ep = self.memory.length() // self.memory.batch_size
-        n = self.n_epochs if ep < self.n_epochs else ep
-        for _ in range(n):
-            imageStates_arr, mousePositionStates_arr, mousePressStates_arr, actions_arr, probs_arr, values_arr, rewards_arr, batches = self.memory.generate_batches()
+        imageStates_arr, mousePositionStates_arr, mousePressStates_arr, actions_arr, probs_arr, rewards_arr, batches = self.memory.generate_batches()
+        
+        for _ in range(self.n_epochs):
 
-            values = values_arr
+            values = self.critic.network.predict([imageStates_arr, mousePositionStates_arr, mousePressStates_arr])
             advantage = np.zeros(len(rewards_arr), dtype=np.float32)
 
             for t in range(len(rewards_arr)-1):

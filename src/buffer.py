@@ -11,7 +11,6 @@ class ReplayBuffer:
         self.mousePressStates = []
         self.actions = []
         self.probs = []
-        self.values = []
         self.rewards = []
 
         self.save_dir = save_dir
@@ -29,17 +28,15 @@ class ReplayBuffer:
             np.array(self.mousePressStates), \
             np.array(self.actions), \
             np.array(self.probs), \
-            np.array(self.values), \
             np.array(self.rewards), \
             batches
 
-    def store_memory(self, image, mousePosition, mousePress, actions, probs, values, reward):
+    def store_memory(self, image, mousePosition, mousePress, actions, probs, reward):
         self.imageStates.append(np.copy(image))
         self.mousePositionStates.append(np.copy(mousePosition))
         self.mousePressStates.append(np.copy(mousePress))
         self.actions.append(np.copy(actions))
         self.probs.append(np.copy(probs))
-        self.values.append(values)
         self.rewards.append(reward)
 
     def clear_memory(self):
@@ -48,7 +45,6 @@ class ReplayBuffer:
         self.mousePressStates = []
         self.actions = []
         self.probs = []
-        self.values = []
         self.rewards = []
     
     def length(self):
@@ -62,7 +58,6 @@ class ReplayBuffer:
         save(self.save_dir + 'mousePressStates_' + timestamp + ".npy", self.mousePressStates)
         save(self.save_dir + 'actions_' + timestamp + ".npy", self.actions)
         save(self.save_dir + 'probs_' + timestamp + ".npy", self.probs)
-        save(self.save_dir + 'values_' + timestamp + ".npy", self.values)
         save(self.save_dir + 'rewards_' + timestamp + ".npy", self.rewards)
         
         self.clear_memory()
@@ -73,6 +68,5 @@ class ReplayBuffer:
         self.mousePressStates = load(self.save_dir + 'mousePressStates_' + timestamp + ".npy")
         self.actions = load(self.save_dir + 'actions_' + timestamp + ".npy")
         self.probs = load(self.save_dir + 'probs_' + timestamp + ".npy")
-        self.values = load(self.save_dir + 'values_' + timestamp + ".npy")
         self.rewards = load(self.save_dir + 'rewards_' + timestamp + ".npy")
         print()
