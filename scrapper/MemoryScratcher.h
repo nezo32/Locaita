@@ -2,7 +2,6 @@
 #include <tlhelp32.h>
 #include <string>
 #include <vector>
-
 typedef struct
 {
     int h300;
@@ -11,6 +10,7 @@ typedef struct
     int hMiss;
     int combo;
     int maxCombo;
+    double accuracy;
 } Hits;
 
 typedef struct
@@ -28,7 +28,9 @@ typedef struct
 
 extern "C"
 {
-    __declspec(dllexport) HANDLE GetOsuHandle();
+    __declspec(dllexport) HANDLE GetOsuHandle(DWORD &ppid);
+    __declspec(dllexport) void ResumeProcess(HANDLE process);
+    __declspec(dllexport) void SuspendProcess(HANDLE process);
 
     __declspec(dllexport) Hits *CreateHitsData();
     __declspec(dllexport) SigPage *GetRulesetsSigPage(HANDLE);
@@ -44,6 +46,7 @@ extern "C"
     __declspec(dllexport) int GetHMiss(Hits *);
     __declspec(dllexport) int GetCombo(Hits *);
     __declspec(dllexport) int GetMaxCombo(Hits *);
+    __declspec(dllexport) double GetAcc(Hits *);
 
     __declspec(dllexport) void ClearHitsData(Hits *);
     __declspec(dllexport) void ClearSigPage(SigPage *);

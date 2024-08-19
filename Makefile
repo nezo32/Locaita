@@ -1,19 +1,11 @@
-play-init: clear build-memory
-	python src/main.py
-play: clear-train-data
-	python src/main.py --load-models
-train: clear-tensorboard
-	python src/train.py
 metrics:
 	tensorboard --logdir=./tensorboard
 
 clear-tensorboard:
 	powershell rm tensorboard/*events*
-clear-train-data:
-	powershell rm tmp/*.npy
 clear-memory-build:
 	powershell rm dll/*
-clear: clear-tensorboard clear-train-data
+clear: clear-tensorboard
 	powershell rm models/checkpoint*, models/actor*, models/critic*
 
 

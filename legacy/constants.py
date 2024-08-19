@@ -1,5 +1,4 @@
 import threading
-import numpy as np
 
 EXIT_KEY = 'q'
 TRAIN_KEY = '+'

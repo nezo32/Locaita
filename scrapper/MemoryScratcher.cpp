@@ -103,7 +103,55 @@ const WCHAR *GetWC(const WCHAR *c)
     return c;
 }
 
-__declspec(dllexport) HANDLE GetOsuHandle()
+__declspec(dllexport) void SuspendProcess(HANDLE process)
+{
+    HANDLE hThreadSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
+
+    THREADENTRY32 threadEntry;
+    threadEntry.dwSize = sizeof(THREADENTRY32);
+
+    Thread32First(hThreadSnapshot, &threadEntry);
+
+    do
+    {
+        if (threadEntry.th32OwnerProcessID == GetProcessId(process))
+        {
+            HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE,
+                                        threadEntry.th32ThreadID);
+
+            SuspendThread(hThread);
+            CloseHandle(hThread);
+        }
+    } while (Thread32Next(hThreadSnapshot, &threadEntry));
+
+    CloseHandle(hThreadSnapshot);
+}
+
+__declspec(dllexport) void ResumeProcess(HANDLE process)
+{
+    HANDLE hThreadSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
+
+    THREADENTRY32 threadEntry;
+    threadEntry.dwSize = sizeof(THREADENTRY32);
+
+    Thread32First(hThreadSnapshot, &threadEntry);
+
+    do
+    {
+        if (threadEntry.th32OwnerProcessID == GetProcessId(process))
+        {
+            HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE,
+                                        threadEntry.th32ThreadID);
+
+            ResumeThread(hThread);
+            CloseHandle(hThread);
+        }
+    } while (Thread32Next(hThreadSnapshot, &threadEntry));
+
+    CloseHandle(hThreadSnapshot);
+}
+
+__declspec(dllexport) HANDLE GetOsuHandle(DWORD &ppid)
 {
 
     WCHAR name[] = L"osu!.exe";
@@ -141,6 +189,7 @@ __declspec(dllexport) HANDLE GetOsuHandle()
     }
 
     HANDLE process = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
+    ppid = pid;
 
     if (process == NULL)
     {
@@ -248,6 +297,7 @@ __declspec(dllexport) Hits *GetHitsData(HANDLE process, uint64_t baseRulesetsAdd
     // HitMiss       [[Ruleset + 0x68] + 0x38] + 0x92    int16
     // Combo         [[Ruleset + 0x68] + 0x38] + 0x94    int16
     // MaxCombo      [[Ruleset + 0x68] + 0x38] + 0x68    int16
+    // Accuracy      [[Ruleset + 0x68] + 0x48] + 0xC     float64
 
     int32_t buffer{};
     size_t readBytes{};
@@ -256,11 +306,17 @@ __declspec(dllexport) Hits *GetHitsData(HANDLE process, uint64_t baseRulesetsAdd
     ReadProcessMemory(process, (LPBYTE)buffer + 0x4, &buffer, sizeof(int32_t), &readBytes);
 
     uint32_t rulesetAddress = buffer;
+    uint32_t rulesetAccAddress = buffer;
     ReadProcessMemory(process, (LPBYTE)rulesetAddress + 0x68, &buffer, sizeof(int32_t), &readBytes);
+    ReadProcessMemory(process, (LPBYTE)buffer + 0x48, &rulesetAccAddress, sizeof(int32_t), &readBytes);
     ReadProcessMemory(process, (LPBYTE)buffer + 0x38, &buffer, sizeof(int32_t), &readBytes);
 
     int32_t hits = buffer;
+    int32_t accuracy = rulesetAccAddress;
     int16_t buff{};
+    double buffAcc{};
+    ReadProcessMemory(process, (LPBYTE)rulesetAccAddress + 0xC, &buffAcc, sizeof(double), &readBytes);
+    hitsReturn->accuracy = buffAcc;
     ReadProcessMemory(process, (LPBYTE)hits + 0x8A, &buff, sizeof(int16_t), &readBytes);
     hitsReturn->h300 = buff;
     ReadProcessMemory(process, (LPBYTE)hits + 0x88, &buff, sizeof(int16_t), &readBytes);
@@ -310,6 +366,10 @@ __declspec(dllexport) int GetHMiss(Hits *data)
 __declspec(dllexport) int GetCombo(Hits *data)
 {
     return data->combo;
+}
+__declspec(dllexport) double GetAcc(Hits *data)
+{
+    return data->accuracy;
 }
 __declspec(dllexport) int GetMaxCombo(Hits *data)
 {

@@ -1,6 +1,6 @@
 import ctypes
 
-lib = ctypes.CDLL('F:\\LocAInaOsuModule\\dll\\MemoryScratcher.dll')
+lib = ctypes.CDLL('F:\\LocAInaOsuModule\\scrapper\\MemoryScratcher.dll')
 
 class Hits(ctypes.Structure):
     _fields_ = [('h300', ctypes.c_int),
@@ -8,7 +8,8 @@ class Hits(ctypes.Structure):
                 ('h50', ctypes.c_int),
                 ('hMiss', ctypes.c_int),
                 ('combo', ctypes.c_int),
-                ('maxCombo', ctypes.c_int)]
+                ('maxCombo', ctypes.c_int),
+                ('accuracy', ctypes.c_double)]
 
 class SigPage(ctypes.Structure):
     _fields_ = [('page', ctypes.c_void_p),
@@ -23,12 +24,15 @@ lib.GetStatusSigPage.argtypes = [ctypes.c_void_p]
 lib.CloseOsuHandle.argtypes = [ctypes.c_void_p]
 lib.ClearHitsData.argtypes = [ctypes.c_void_p]
 
+
 lib.GetH300.argtypes = [ctypes.POINTER(Hits)]
 lib.GetH100.argtypes = [ctypes.POINTER(Hits)]
 lib.GetH50.argtypes = [ctypes.POINTER(Hits)]
 lib.GetHMiss.argtypes = [ctypes.POINTER(Hits)]
 lib.GetCombo.argtypes = [ctypes.POINTER(Hits)]
 lib.GetMaxCombo.argtypes = [ctypes.POINTER(Hits)]
+lib.GetAcc.argtypes = [ctypes.POINTER(Hits)]
+
 
 
 lib.GetOsuHandle.restype = ctypes.c_void_p
@@ -46,9 +50,15 @@ lib.GetH50.restype = ctypes.c_int
 lib.GetHMiss.restype = ctypes.c_int
 lib.GetCombo.restype = ctypes.c_int
 lib.GetMaxCombo.restype = ctypes.c_int
+lib.GetAcc.restype = ctypes.c_double
 
-def GetOsuHandle(): 
-    return lib.GetOsuHandle()
+def GetOsuHandle(ppid): 
+    return lib.GetOsuHandle(ppid)
+
+def SuspendProcess(handle):
+    return lib.SuspendProcess(handle)
+def ResumeProcess(handle):
+    return lib.ResumeProcess(handle)
 
 def GetRulesetsSigPage(handle):
     return lib.GetRulesetsSigPage(handle)
@@ -62,7 +72,7 @@ def GetBaseAddress(handle, sigPage):
 
 def GetHitsData(handle, baseRulesetsAddress, hits):
     return lib.GetHitsData(handle, baseRulesetsAddress, hits)
-def GetStateData(handle, baseAddress):
+def GetStateData(handle, baseAddress) -> int:
     return lib.GetStateData(handle, baseAddress)
 
 def GetH300(hitsData):
@@ -77,7 +87,8 @@ def GetCombo(hitsData):
     return lib.GetCombo(hitsData)
 def GetMaxCombo(hitsData):
     return lib.GetMaxCombo(hitsData)
-
+def GetAcc(hitsData):
+    return lib.GetAcc(hitsData)
 
 def ClearHitsData(dataPointer):
     lib.ClearHitsData(dataPointer)

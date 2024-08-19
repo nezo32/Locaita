@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow_probability.python.layers import DistributionLambda
 from tensorflow_probability.python.distributions import Normal
 from tensorflow.python.keras import Model
-from tensorflow.python.keras.layers import Input, Conv2D, MaxPool2D, Flatten, Dense, LeakyReLU, Concatenate, Activation
+from tensorflow.python.keras.layers import Input, Conv2D, MaxPool2D, Flatten, Dense, LeakyReLU, Concatenate
 from keras.utils import plot_model
 
 
@@ -19,17 +19,7 @@ class ActorNetwork:
         mouse_press_input = Input((1, ))
         
         # Image processing
-        conv_layer = Conv2D(8, (3, 3), padding="same")(image_input)
-        conv_layer = LeakyReLU()(conv_layer)
-        conv_layer = Conv2D(8, (3, 3), padding="same")(conv_layer)
-        conv_layer = LeakyReLU()(conv_layer)
-        conv_layer = MaxPool2D((2, 2), 2)(conv_layer)
-        conv_layer = Conv2D(16, (3, 3), padding="same")(conv_layer)
-        conv_layer = LeakyReLU()(conv_layer)
-        conv_layer = Conv2D(16, (3, 3), padding="same")(conv_layer)
-        conv_layer = LeakyReLU()(conv_layer)
-        conv_layer = MaxPool2D((2, 2), 2)(conv_layer)
-        conv_layer = Conv2D(16, (3, 3), padding="same")(conv_layer)
+        conv_layer = Conv2D(16, (3, 3), padding="same")(image_input)
         conv_layer = LeakyReLU()(conv_layer)
         conv_layer = Conv2D(16, (3, 3), padding="same")(conv_layer)
         conv_layer = LeakyReLU()(conv_layer)
@@ -42,6 +32,16 @@ class ActorNetwork:
         conv_layer = Conv2D(32, (3, 3), padding="same")(conv_layer)
         conv_layer = LeakyReLU()(conv_layer)
         conv_layer = Conv2D(32, (3, 3), padding="same")(conv_layer)
+        conv_layer = LeakyReLU()(conv_layer)
+        conv_layer = MaxPool2D((2, 2), 2)(conv_layer)
+        conv_layer = Conv2D(64, (3, 3), padding="same")(conv_layer)
+        conv_layer = LeakyReLU()(conv_layer)
+        conv_layer = Conv2D(64, (3, 3), padding="same")(conv_layer)
+        conv_layer = LeakyReLU()(conv_layer)
+        conv_layer = MaxPool2D((2, 2), 2)(conv_layer)
+        conv_layer = Conv2D(64, (3, 3), padding="same")(conv_layer)
+        conv_layer = LeakyReLU()(conv_layer)
+        conv_layer = Conv2D(64, (3, 3), padding="same")(conv_layer)
         conv_layer = LeakyReLU()(conv_layer)
         conv_layer = MaxPool2D((2, 2), 2)(conv_layer)
         conv_layer = Flatten()(conv_layer)
@@ -51,6 +51,10 @@ class ActorNetwork:
         
         # FC
         fc = Dense(128)(concat_input)
+        fc = LeakyReLU()(fc)
+        fc = Dense(128)(fc)
+        fc = LeakyReLU()(fc)
+        fc = Dense(128)(fc)
         fc = LeakyReLU()(fc)
         fc = Dense(128)(fc)
         fc = LeakyReLU()(fc)
@@ -72,17 +76,7 @@ class CriticNetwork:
         mouse_press_input = Input((1, ))
         
         # Image processing
-        conv_layer = Conv2D(8, (3, 3), padding="same")(image_input)
-        conv_layer = LeakyReLU()(conv_layer)
-        conv_layer = Conv2D(8, (3, 3), padding="same")(conv_layer)
-        conv_layer = LeakyReLU()(conv_layer)
-        conv_layer = MaxPool2D((2, 2), 2)(conv_layer)
-        conv_layer = Conv2D(16, (3, 3), padding="same")(conv_layer)
-        conv_layer = LeakyReLU()(conv_layer)
-        conv_layer = Conv2D(16, (3, 3), padding="same")(conv_layer)
-        conv_layer = LeakyReLU()(conv_layer)
-        conv_layer = MaxPool2D((2, 2), 2)(conv_layer)
-        conv_layer = Conv2D(16, (3, 3), padding="same")(conv_layer)
+        conv_layer = Conv2D(16, (3, 3), padding="same")(image_input)
         conv_layer = LeakyReLU()(conv_layer)
         conv_layer = Conv2D(16, (3, 3), padding="same")(conv_layer)
         conv_layer = LeakyReLU()(conv_layer)
@@ -95,6 +89,16 @@ class CriticNetwork:
         conv_layer = Conv2D(32, (3, 3), padding="same")(conv_layer)
         conv_layer = LeakyReLU()(conv_layer)
         conv_layer = Conv2D(32, (3, 3), padding="same")(conv_layer)
+        conv_layer = LeakyReLU()(conv_layer)
+        conv_layer = MaxPool2D((2, 2), 2)(conv_layer)
+        conv_layer = Conv2D(64, (3, 3), padding="same")(conv_layer)
+        conv_layer = LeakyReLU()(conv_layer)
+        conv_layer = Conv2D(64, (3, 3), padding="same")(conv_layer)
+        conv_layer = LeakyReLU()(conv_layer)
+        conv_layer = MaxPool2D((2, 2), 2)(conv_layer)
+        conv_layer = Conv2D(64, (3, 3), padding="same")(conv_layer)
+        conv_layer = LeakyReLU()(conv_layer)
+        conv_layer = Conv2D(64, (3, 3), padding="same")(conv_layer)
         conv_layer = LeakyReLU()(conv_layer)
         conv_layer = MaxPool2D((2, 2), 2)(conv_layer)
         conv_layer = Flatten()(conv_layer)
@@ -104,6 +108,10 @@ class CriticNetwork:
         
         # FC
         fc = Dense(128)(concat_input)
+        fc = LeakyReLU()(fc)
+        fc = Dense(128)(fc)
+        fc = LeakyReLU()(fc)
+        fc = Dense(128)(fc)
         fc = LeakyReLU()(fc)
         fc = Dense(128)(fc)
         fc = LeakyReLU()(fc)
