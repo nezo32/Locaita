@@ -12,16 +12,17 @@ class ReplayBuffer():
         return len(self.__memory)
     
     def push(self, state, action, reward, next_state, controls_state, next_controls_state):
-        s = tf.convert_to_tensor([state])
-        a = tf.convert_to_tensor([action])
-        r = tf.convert_to_tensor([reward])
-        n_s = tf.convert_to_tensor([next_state])
-        c = tf.convert_to_tensor([controls_state])
-        n_c = tf.convert_to_tensor([next_controls_state])
-        self.__memory.append((s, a, r, n_s, c, n_c))
+        self.__memory.append((state, action, reward, next_state, controls_state, next_controls_state))
     
     def batch(self):
-        return random.sample(self.__memory, self.batch_size)
+        batch = random.sample(self.__memory, self.batch_size)
+        s = tf.stack([a[0] for a in batch])
+        a = tf.stack([a[1] for a in batch])
+        r = tf.stack([a[2] for a in batch])
+        s1 = tf.stack([a[3] for a in batch])
+        c_s = tf.stack([a[4] for a in batch])
+        c_s1 = tf.stack([a[5] for a in batch])
+        return s, a, r, s1, c_s, c_s1
     
     def clear(self):
         self.__memory.clear()

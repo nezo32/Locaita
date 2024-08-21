@@ -8,8 +8,10 @@ class Hits(ctypes.Structure):
                 ('h50', ctypes.c_int),
                 ('hMiss', ctypes.c_int),
                 ('combo', ctypes.c_int),
+                ('score', ctypes.c_int),
                 ('maxCombo', ctypes.c_int),
-                ('accuracy', ctypes.c_double)]
+                ('accuracy', ctypes.c_double),
+                ]
 
 class SigPage(ctypes.Structure):
     _fields_ = [('page', ctypes.c_void_p),
@@ -32,6 +34,8 @@ lib.GetHMiss.argtypes = [ctypes.POINTER(Hits)]
 lib.GetCombo.argtypes = [ctypes.POINTER(Hits)]
 lib.GetMaxCombo.argtypes = [ctypes.POINTER(Hits)]
 lib.GetAcc.argtypes = [ctypes.POINTER(Hits)]
+lib.GetScore.argtypes = [ctypes.POINTER(Hits)]
+
 
 
 
@@ -51,6 +55,8 @@ lib.GetHMiss.restype = ctypes.c_int
 lib.GetCombo.restype = ctypes.c_int
 lib.GetMaxCombo.restype = ctypes.c_int
 lib.GetAcc.restype = ctypes.c_double
+lib.GetScore.restype = ctypes.c_int
+
 
 def GetOsuHandle(ppid): 
     return lib.GetOsuHandle(ppid)
@@ -75,6 +81,8 @@ def GetHitsData(handle, baseRulesetsAddress, hits):
 def GetStateData(handle, baseAddress) -> int:
     return lib.GetStateData(handle, baseAddress)
 
+def GetScore(hitsData):
+    return lib.GetScore(hitsData)
 def GetH300(hitsData):
     return lib.GetH300(hitsData)
 def GetH100(hitsData):
@@ -87,7 +95,7 @@ def GetCombo(hitsData):
     return lib.GetCombo(hitsData)
 def GetMaxCombo(hitsData):
     return lib.GetMaxCombo(hitsData)
-def GetAcc(hitsData):
+def GetAcc(hitsData) -> float:
     return lib.GetAcc(hitsData)
 
 def ClearHitsData(dataPointer):

@@ -25,15 +25,21 @@ def move_to_songs():
 
 def find_maps(stars=1):
     c = Controller()
-    search = f"stars>{stars}.01 stars<{stars}.99 mode=osu length>90"
+    search = f"stars>{stars}.01 stars<{stars}.99 mode=osu length>90 length<180"
     c.type("".join(map(lambda _: "\b", search)))
     time.sleep(0.2)
     c.type(search)
+    
+def skip_map_begining():
+    c = Controller()
+    c.press(KeyCode.from_vk(win32con.VK_SPACE))
+    time.sleep(0.2)
+    c.release(KeyCode.from_vk(win32con.VK_SPACE))
+    return
 
 def launch_random_beatmap():
     time.sleep(0.5)
     c = Controller()
-    hc = pyclick.HumanClicker()
     c.press(KeyCode.from_vk(win32con.VK_F2))
     time.sleep(0.2)
     c.release(KeyCode.from_vk(win32con.VK_F2))
@@ -41,9 +47,6 @@ def launch_random_beatmap():
     c.press(KeyCode.from_vk(win32con.VK_RETURN))
     time.sleep(0.2)
     c.release(KeyCode.from_vk(win32con.VK_RETURN))
-    x, y = pyautogui.center((0, 0, 1920, 1080))
-    hc.move((x, y),  0)
-    del hc
     return
 
 def reset_mods():

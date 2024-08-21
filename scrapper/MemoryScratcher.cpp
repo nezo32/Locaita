@@ -298,6 +298,7 @@ __declspec(dllexport) Hits *GetHitsData(HANDLE process, uint64_t baseRulesetsAdd
     // Combo         [[Ruleset + 0x68] + 0x38] + 0x94    int16
     // MaxCombo      [[Ruleset + 0x68] + 0x38] + 0x68    int16
     // Accuracy      [[Ruleset + 0x68] + 0x48] + 0xC     float64
+    // Score         [[Ruleset + 0x68] + 0x38] + 0x78    int32
 
     int32_t buffer{};
     size_t readBytes{};
@@ -314,6 +315,7 @@ __declspec(dllexport) Hits *GetHitsData(HANDLE process, uint64_t baseRulesetsAdd
     int32_t hits = buffer;
     int32_t accuracy = rulesetAccAddress;
     int16_t buff{};
+    int32_t buffScore{};
     double buffAcc{};
     ReadProcessMemory(process, (LPBYTE)rulesetAccAddress + 0xC, &buffAcc, sizeof(double), &readBytes);
     hitsReturn->accuracy = buffAcc;
@@ -329,6 +331,8 @@ __declspec(dllexport) Hits *GetHitsData(HANDLE process, uint64_t baseRulesetsAdd
     hitsReturn->combo = buff;
     ReadProcessMemory(process, (LPBYTE)hits + 0x68, &buff, sizeof(int16_t), &readBytes);
     hitsReturn->maxCombo = buff;
+    ReadProcessMemory(process, (LPBYTE)hits + 0x78, &buffScore, sizeof(int32_t), &readBytes);
+    hitsReturn->score = buffScore;
 
     return hitsReturn;
 }
@@ -345,6 +349,11 @@ __declspec(dllexport) uint32_t GetStateData(HANDLE process, uint64_t baseAddress
     ReadProcessMemory(process, (LPBYTE)buffer, &buffer, sizeof(uint32_t), &readBytes);
 
     return buffer;
+}
+
+__declspec(dllexport) uint64_t GetScore(Hits *data)
+{
+    return data->score;
 }
 
 __declspec(dllexport) int GetH300(Hits *data)

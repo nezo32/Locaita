@@ -9,6 +9,7 @@ typedef struct
     int h50;
     int hMiss;
     int combo;
+    uint64_t score;
     int maxCombo;
     double accuracy;
 } Hits;
@@ -45,6 +46,7 @@ extern "C"
     __declspec(dllexport) int GetH50(Hits *);
     __declspec(dllexport) int GetHMiss(Hits *);
     __declspec(dllexport) int GetCombo(Hits *);
+    __declspec(dllexport) uint64_t GetScore(Hits *);
     __declspec(dllexport) int GetMaxCombo(Hits *);
     __declspec(dllexport) double GetAcc(Hits *);
 

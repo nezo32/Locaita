@@ -1,6 +1,6 @@
 from osu.scrapper import ClearHitsData, ClearSigPage, CloseOsuHandle, CreateHitsData, \
     GetAcc, GetBaseAddress, GetCombo, GetH100, GetH300, GetH50, GetHMiss, GetHitsData, \
-    GetMaxCombo, GetOsuHandle, GetRulesetsSigPage, GetStateData, GetStatusSigPage
+    GetMaxCombo, GetOsuHandle, GetRulesetsSigPage, GetScore, GetStateData, GetStatusSigPage
 import ctypes
 from osu.state import OsuInGameStates
 
@@ -20,8 +20,17 @@ class OsuMemory():
         self.__tempCombo = 0
         self.__tempMiss = 0
         
-        self.__hitsKeys = ('300', '100', '50', 'miss', 'slider_breaks', 'combo', 'max_combo', 'accuracy')
-        self.__hits = dict.fromkeys(self.__hitsKeys, 0)
+        self.__hits = {
+            '300': 0,
+            '100': 0,
+            '50': 0,
+            'miss': 0,
+            'slider_breaks': 0,
+            'combo': 0,
+            'score': 0,
+            'max_combo': 0,
+            'accuracy': 0.0
+        }
     
     def GetInGameState(self) -> OsuInGameStates:
         return OsuInGameStates(GetStateData(self.__handle, self.__statusBaseAddress))
@@ -34,6 +43,7 @@ class OsuMemory():
         self.__hits['combo'] = GetCombo(self.__hitsStruct)
         self.__hits['max_combo'] = GetMaxCombo(self.__hitsStruct)
         self.__hits['accuracy'] = GetAcc(self.__hitsStruct)
+        self.__hits['score'] = GetScore(self.__hitsStruct)
 
         if self.__tempCombo > self.__hits['max_combo']:
             self.__tempCombo = 0
