@@ -74,19 +74,19 @@ def enable_mods(no_fail = True, hard_rock = False, double_time = False):
     
     if no_fail:
         c.press("w")
-        time.sleep(0.1)
+        time.sleep(0.2)
         c.release("w")
-        time.sleep(0.1)
+        time.sleep(0.2)
     if hard_rock:
         c.press("a")
-        time.sleep(0.1)
+        time.sleep(0.2)
         c.release("a")
-        time.sleep(0.1)
+        time.sleep(0.2)
     if double_time:
         c.press("d")
-        time.sleep(0.1)
+        time.sleep(0.2)
         c.release("d")
-        time.sleep(0.1)
+        time.sleep(0.2)
     
     c.press(KeyCode.from_vk(win32con.VK_ESCAPE))
     time.sleep(0.1)

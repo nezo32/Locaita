@@ -55,11 +55,8 @@ def main(osu_manager: OsuManager, mouse_manager: MouseManager):
     i = 0
     for mc in range(MAP_COUNT):
         helper.find_maps(STAR_RATING)
-        sleep(1)
         helper.reset_mods()
-        sleep(0.5)
         helper.enable_mods()
-        sleep(0.5)
         helper.launch_random_beatmap()
         
         controls_state, state = env.reset()
