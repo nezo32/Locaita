@@ -1,6 +1,5 @@
 import time
 import pyclick
-import pyautogui
 from pynput.keyboard import Controller, KeyCode
 import win32con
 

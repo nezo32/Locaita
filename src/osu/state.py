@@ -1,7 +1,10 @@
 from enum import Enum
 
+
 class OsuInGameStates(Enum):
-    MAIN_MENU = 0
-    PLAYING = 2
-    SONG_SELECT = 5
-    RESULT_SCREEN = 7
+    MAIN_MENU = "menu"
+    PLAYING = "in_game"
+    SONG_SELECT = "song_select"
+    RESULT_SCREEN = "results"
+    MAP_LOADING = "loader"
+    UNKNOWN = "unknown"

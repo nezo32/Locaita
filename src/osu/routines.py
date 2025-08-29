@@ -3,13 +3,14 @@ from time import sleep
 from PIL import Image
 from threading import Thread, Event
 
-import helper
+import utils.helper as helper
 
 GLOBAL_THREADS_TERMINATE = Event()
 
+
 def detectActualStart(event: Event, img):
     global GLOBAL_THREADS_TERMINATE
-    while(True):
+    while (True):
         if GLOBAL_THREADS_TERMINATE.is_set():
             break
         try:
@@ -19,12 +20,14 @@ def detectActualStart(event: Event, img):
             continue
 
 # TODO: locate caption on capturing screen
+
+
 def detectFailedThread(event: Event, img):
     global GLOBAL_THREADS_TERMINATE
-    while(True):
+    while (True):
         if GLOBAL_THREADS_TERMINATE.is_set():
             break
-        
+
         try:
             pyautogui.locateOnScreen(img, confidence=0.7)
             event.set()
@@ -33,9 +36,10 @@ def detectFailedThread(event: Event, img):
             event.clear()
             sleep(0.5)
 
+
 def detectWaitingSpaceThread(event: Event, img):
     global GLOBAL_THREADS_TERMINATE
-    while(True):
+    while (True):
         if GLOBAL_THREADS_TERMINATE.is_set():
             break
         try:
@@ -47,25 +51,31 @@ def detectWaitingSpaceThread(event: Event, img):
             event.clear()
             sleep(0.5)
 
+
 class OsuRoutines():
     def __init__(self):
         self.FAIL_IS_DETECTED = Event()
         self.ACTUAL_START = Event()
         self.IS_WATING_SPACE = Event()
-        
+
         self.__failedImage = Image.open('status/failed.png')
         self.__timerImage = Image.open('status/timer.png')
         self.__waitingSpaceImage = Image.open('status/waiting_space.png')
-        
-        self.threads = [ \
-            Thread(target=detectFailedThread, args=[self.FAIL_IS_DETECTED, self.__failedImage]), \
-            Thread(target=detectActualStart, args=[self.ACTUAL_START, self.__timerImage]), \
-            Thread(target=detectWaitingSpaceThread, args=[self.IS_WATING_SPACE, self.__waitingSpaceImage]), \
+
+        self.threads = [
+            Thread(target=detectFailedThread, args=[
+                   self.FAIL_IS_DETECTED, self.__failedImage]),
+            Thread(target=detectActualStart, args=[
+                   self.ACTUAL_START, self.__timerImage]),
+            Thread(target=detectWaitingSpaceThread, args=[
+                   self.IS_WATING_SPACE, self.__waitingSpaceImage]),
         ]
+
         for thread in self.threads:
             thread.start()
-    
+
     def __del__(self):
         GLOBAL_THREADS_TERMINATE.set()
-        for thread in self.threads:
-            thread.join()
+        if hasattr(self, "threads"):
+            for thread in self.threads:
+                thread.join()

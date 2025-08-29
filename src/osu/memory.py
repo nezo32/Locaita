@@ -1,70 +1,105 @@
-from osu.scrapper import ClearHitsData, ClearSigPage, CloseOsuHandle, CreateHitsData, \
-    GetAcc, GetBaseAddress, GetCombo, GetH100, GetH300, GetH50, GetHMiss, GetHitsData, \
-    GetMaxCombo, GetOsuHandle, GetRulesetsSigPage, GetScore, GetStateData, GetStatusSigPage
-import ctypes
+import threading
+import time
 from osu.state import OsuInGameStates
+from typing import TypedDict
+import websocket
+import json
+""" import win32api
+import win32con """
+
+
+class Hits(TypedDict):
+    score: int
+    accuracy: float
+
+
+""" def debounce(wait_time):
+    def decorator(func):
+        timer = None
+        lock = threading.Lock()
+
+        def debounced_function(*args, **kwargs):
+            nonlocal timer
+            with lock:
+                if timer is not None:
+                    timer.cancel()
+                timer = threading.Timer(
+                    wait_time, func, args=args, kwargs=kwargs)
+                timer.start()
+        return debounced_function
+    return decorator """
+
 
 class OsuMemory():
     def __init__(self):
-        self.__pid = ctypes.c_ulong()
-        self.__handle = GetOsuHandle(ctypes.byref(self.__pid))
-        
-        self.__rulesetSigPage = GetRulesetsSigPage(self.__handle)
-        self.__statusSigPage = GetStatusSigPage(self.__handle)
-        
-        self.__rulesetBaseAddress = GetBaseAddress(self.__handle, self.__rulesetSigPage)
-        self.__statusBaseAddress = GetBaseAddress(self.__handle, self.__statusSigPage)
-        
-        self.__hitsStruct = CreateHitsData()
-        
-        self.__tempCombo = 0
-        self.__tempMiss = 0
-        
-        self.__hits = {
-            '300': 0,
-            '100': 0,
-            '50': 0,
-            'miss': 0,
-            'slider_breaks': 0,
-            'combo': 0,
+        self.__state: OsuInGameStates = OsuInGameStates.UNKNOWN
+        self.__hits: Hits = {
             'score': 0,
-            'max_combo': 0,
             'accuracy': 0.0
         }
-    
-    def GetInGameState(self) -> OsuInGameStates:
-        return OsuInGameStates(GetStateData(self.__handle, self.__statusBaseAddress))
-    
-    def __getHitsData(self):
-        self.__hits['300'] = GetH300(self.__hitsStruct)
-        self.__hits['100'] = GetH100(self.__hitsStruct)
-        self.__hits['50'] = GetH50(self.__hitsStruct)
-        self.__hits['miss'] = GetHMiss(self.__hitsStruct)
-        self.__hits['combo'] = GetCombo(self.__hitsStruct)
-        self.__hits['max_combo'] = GetMaxCombo(self.__hitsStruct)
-        self.__hits['accuracy'] = GetAcc(self.__hitsStruct)
-        self.__hits['score'] = GetScore(self.__hitsStruct)
 
-        if self.__tempCombo > self.__hits['max_combo']:
-            self.__tempCombo = 0
-            
-        if self.__hits['combo'] < self.__tempCombo and self.__hits['miss'] == self.__tempMiss:
-            self.__hits['slider_breaks'] += 1
-        
-        self.__tempCombo = self.__hits['combo']
-        self.__tempMiss = self.__hits['miss']
-        
-        return self.__hits
-    
+        self.ws = websocket.WebSocketApp("ws://127.0.0.1:7272")
+        self.ws.on_open = lambda *_: print("connected to ws")
+        self.ws.on_close = lambda *_: print("connection to ws is closed")
+        self.ws.on_error = lambda *e: print("error occurred in ws")
+        self.ws.on_message = self.OnMessage
+        self.state_lock = threading.Lock()
+        self.hits_lock = threading.Lock()
+
+        self.thread = threading.Thread(target=self.ws.run_forever)
+        self.thread.start()
+        """ self.cancellation_token_lock = threading.Lock()
+        self.cancellation_token = False
+        self.keypress_thread = threading.Thread(target=self.keypress)
+        self.keypress_thread.start() """
+
+    def GetInGameState(self) -> OsuInGameStates:
+        with self.state_lock:
+            return self.__state
+
     def GetHitsData(self):
-        self.__hitsStruct = GetHitsData(self.__handle, self.__rulesetBaseAddress, self.__hitsStruct)
-        return self.__getHitsData()
-    
-    def ClearOsuMemoryData(self):
-        ClearHitsData(self.__hitsStruct)
-        ClearSigPage(self.__rulesetSigPage)
-        ClearSigPage(self.__statusSigPage)
-        CloseOsuHandle(self.__handle)
-    
+        with self.hits_lock:
+            return self.__hits
+
+    """ @debounce(1)
+    def keypress_send_pause(self):
+        self.ws.send_text("pause")
+
+    @debounce(1)
+    def keypress_send_resume(self):
+        self.ws.send_text("resume")
+
+    def keypress(self):
+        while True:
+            with self.cancellation_token_lock:
+                if self.cancellation_token:
+                    break
+                
+            if win32api.GetAsyncKeyState(win32con.VK_HOME) < 0:
+                self.keypress_send_pause()
+            if win32api.GetAsyncKeyState(win32con.VK_END) < 0:
+                self.keypress_send_resume()
+            time.sleep(0.05) """
+
+    def OnMessage(self, _, m):
+        data = json.loads(m)
+        with self.state_lock:
+            self.__state = data["state"]
+        with self.hits_lock:
+            self.__hits = {
+                "accuracy": data["accuracy"],
+                "score": data["score"]
+            }
+
+    def OnClose(self, *_):
+        print("ws is closed")
+        """ with self.cancellation_token_lock:
+            self.cancellation_token = True
+        self.ws.close() """
+
     def __del__(self):
-        self.ClearOsuMemoryData()
+        """ with self.cancellation_token_lock:
+            self.cancellation_token = True """
+        self.ws.close()
+        self.thread.join()
+        """ self.keypress_thread.join() """

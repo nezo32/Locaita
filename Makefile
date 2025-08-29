@@ -1,3 +1,5 @@
+.PHONY: train
+
 train:
 	python src/training.py
 metrics:
@@ -5,14 +7,14 @@ metrics:
 
 clear-tensorboard:
 	powershell rm tensorboard/*events*
-clear-memory-build:
-	powershell rm scrapper/*.o, scrapper/*.dll
 clear: clear-tensorboard
 	powershell rm models/*
 
-
-build-memory: clear-memory-build memory_scratcher.o
-	g++ -shared -o scrapper/MemoryScratcher.dll scrapper/memory_scratcher.o
-memory_scratcher.o:
-	g++ -c -fPIC scrapper/MemoryScratcher.cpp -o scrapper/memory_scratcher.o
-	
+# C++ compile/clear
+build-memory: clear-memory-build scrapper/memory_scratcher.dll
+scrapper/memory_scratcher.dll: scrapper/memory_scratcher.o
+	g++ -shared -o $@ $^
+scrapper/memory_scratcher.o: scrapper/MemoryScratcher.cpp
+	g++ -c -fPIC $< -o $@
+clear-memory-build:
+	powershell rm scrapper/*.o, scrapper/*.dll

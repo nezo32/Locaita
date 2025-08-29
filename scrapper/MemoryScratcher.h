@@ -2,6 +2,9 @@
 #include <tlhelp32.h>
 #include <string>
 #include <vector>
+#include <cstdint>
+#include <stdexcept>
+
 typedef struct
 {
     int h300;
@@ -27,30 +30,23 @@ typedef struct
     char *mask;
 } SigPage;
 
-extern "C"
-{
-    __declspec(dllexport) HANDLE GetOsuHandle(DWORD &ppid);
-    __declspec(dllexport) void ResumeProcess(HANDLE process);
-    __declspec(dllexport) void SuspendProcess(HANDLE process);
+#define EXPORT extern "C" __declspec(dllexport)
+#define NULLC '\0'
 
-    __declspec(dllexport) Hits *CreateHitsData();
-    __declspec(dllexport) SigPage *GetRulesetsSigPage(HANDLE);
-    __declspec(dllexport) SigPage *GetStatusSigPage(HANDLE);
-    __declspec(dllexport) uint64_t GetBaseAddress(HANDLE, SigPage *);
+EXPORT void Initialize();
+EXPORT void Clear();
 
-    __declspec(dllexport) Hits *GetHitsData(HANDLE, uint64_t, Hits *);
-    __declspec(dllexport) uint32_t GetStateData(HANDLE, uint64_t);
+EXPORT void SuspendProcess();
+EXPORT void ResumeProcess();
 
-    __declspec(dllexport) int GetH300(Hits *);
-    __declspec(dllexport) int GetH100(Hits *);
-    __declspec(dllexport) int GetH50(Hits *);
-    __declspec(dllexport) int GetHMiss(Hits *);
-    __declspec(dllexport) int GetCombo(Hits *);
-    __declspec(dllexport) uint64_t GetScore(Hits *);
-    __declspec(dllexport) int GetMaxCombo(Hits *);
-    __declspec(dllexport) double GetAcc(Hits *);
+EXPORT void GetHitsData();
+EXPORT unsigned int GetStateData();
 
-    __declspec(dllexport) void ClearHitsData(Hits *);
-    __declspec(dllexport) void ClearSigPage(SigPage *);
-    __declspec(dllexport) BOOL CloseOsuHandle(HANDLE);
-}
+EXPORT int GetH300();
+EXPORT int GetH100();
+EXPORT int GetH50();
+EXPORT int GetHMiss();
+EXPORT int GetCombo();
+EXPORT double GetAcc();
+EXPORT int GetMaxCombo();
+EXPORT unsigned long long GetScore();
