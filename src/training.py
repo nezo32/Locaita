@@ -66,15 +66,14 @@ if __name__ == "__main__":
     env = None
 
     try:
-        osu_manager = OsuManager()
-        mouse_manager = MouseManager()
-        main(osu_manager, mouse_manager)
+        with OsuManager() as osu_manager:
+            mouse_manager = MouseManager()
+            main(osu_manager, mouse_manager)
 
     except Exception:
         print(traceback.format_exc())
 
     finally:
-        del osu_manager
         del env
         sys.exit(0)
 

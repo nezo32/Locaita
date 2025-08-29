@@ -1,3 +1,5 @@
+import contextlib
+from typing_extensions import override
 import psutil
 import numpy as np
 from time import sleep
@@ -7,7 +9,7 @@ from osu.routines import OsuRoutines
 from osu.window import OsuWindow
 
 
-class OsuManager():
+class OsuManager(contextlib.AbstractContextManager["OsuManager"]):
     def __init__(self, windowed=False):
         self.__findAttemptCount = 0
         while "osu!.exe" not in (i.name() for i in psutil.process_iter()):
@@ -24,10 +26,16 @@ class OsuManager():
         self.Window = OsuWindow(windowed)
         self.Routines = OsuRoutines()
 
-    def __del__(self):
+    @override
+    def __enter__(self):
+        _ = self.Memory.__enter__()
+        return super().__enter__()
+
+    @override
+    def __exit__(self, exc_type, exc_value, traceback):
         if hasattr(self, "Routines"):
             del self.Routines
         if hasattr(self, "Window"):
             del self.Window
         if hasattr(self, "Memory"):
-            del self.Memory
+            self.Memory.__exit__(exc_type, exc_value, traceback)

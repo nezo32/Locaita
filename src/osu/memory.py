@@ -1,5 +1,7 @@
+import contextlib
 import threading
 import time
+from typing_extensions import override
 from osu.state import OsuInGameStates
 from typing import TypedDict
 import websocket
@@ -30,7 +32,7 @@ class Hits(TypedDict):
     return decorator """
 
 
-class OsuMemory():
+class OsuMemory(contextlib.AbstractContextManager["OsuMemory"]):
     def __init__(self):
         self.__state: OsuInGameStates = OsuInGameStates.UNKNOWN
         self.__hits: Hits = {
@@ -46,12 +48,25 @@ class OsuMemory():
         self.state_lock = threading.Lock()
         self.hits_lock = threading.Lock()
 
-        self.thread = threading.Thread(target=self.ws.run_forever)
-        self.thread.start()
         """ self.cancellation_token_lock = threading.Lock()
-        self.cancellation_token = False
-        self.keypress_thread = threading.Thread(target=self.keypress)
+        self.cancellation_token = False """
+        self.thread = threading.Thread(target=self.ws.run_forever)
+
+    @override
+    def __enter__(self):
+        self.thread.start()
+
+        """ self.keypress_thread = threading.Thread(target=self.keypress)
         self.keypress_thread.start() """
+        return super().__enter__()
+
+    @override
+    def __exit__(self, exc_type, exc_value, traceback):
+        """ with self.cancellation_token_lock:
+            self.cancellation_token = True """
+        self.ws.close()
+        self.thread.join()
+        """ self.keypress_thread.join() """
 
     def GetInGameState(self) -> OsuInGameStates:
         with self.state_lock:
@@ -97,9 +112,3 @@ class OsuMemory():
             self.cancellation_token = True
         self.ws.close() """
 
-    def __del__(self):
-        """ with self.cancellation_token_lock:
-            self.cancellation_token = True """
-        self.ws.close()
-        self.thread.join()
-        """ self.keypress_thread.join() """
