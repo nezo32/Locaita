@@ -1,0 +1,10 @@
+__pycache__
+.vscode
+*.o
+*.dll
+locAIna
+tensorboard/events*
+tmp/*.npy
+*.exe
+*.log
+.env.local

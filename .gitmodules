@@ -1,0 +1,4 @@
+[submodule "osu_game"]
+	path = external/osu_game
+	url = git@github.com:nezo32/osu.git
+	branch = "master"
