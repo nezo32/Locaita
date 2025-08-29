@@ -1,6 +1,7 @@
 import os
 import sys
 import logging
+import threading
 import log.levels as levels
 from dotenv import load_dotenv
 
@@ -64,3 +65,11 @@ class Logger:
 
 Logger.SetLevel(levels.LevelFromString(os.getenv("LOG_LEVEL", "DEBUG")))
 Logger.SetFormatter(logging.Formatter(_log_format))
+
+
+def handle_thread_exception(args):
+    base_logger.error("Raised exception in thread %s", args.thread.name, exc_info=(
+        args.exc_type, args.exc_value, args.exc_traceback))
+
+
+threading.excepthook = handle_thread_exception

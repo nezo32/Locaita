@@ -1,7 +1,7 @@
 import os
 import subprocess
 from log.logger import Logger
-from scripts.callable_script import CallableScript
+from scripts import CallableScript
 
 
 class OsuLaunchScript(CallableScript):

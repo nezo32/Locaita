@@ -1,0 +1,107 @@
+import json
+import os
+import threading
+import contextlib
+from time import sleep
+from typing import Literal, TypedDict, override
+from websocket import WebSocketApp
+from locaita.modules.osu.states import GameState, PlayerState
+from log.logger import Logger
+
+
+class WebSocketDTO(TypedDict):
+    state: Literal["menu", "in_game", "song_select",
+                   "results", "loader", "unknown"]
+    score: int
+    accuracy: float
+
+
+class WebSocketClient:
+    def __init__(self, url: str):
+        self.__app = WebSocketApp(url)
+
+        self.__app.on_open = self.__onOpen
+        self.__app.on_close = self. __onClose
+        self.__app.on_error = self.__onError
+        self.__app.on_message = self.__onMessage
+
+        self.__lock = threading.Lock()
+        self.__connected_lock = threading.Lock()
+        self.__thread = None
+
+        self.__isConnected = False
+
+        self.__data: WebSocketDTO = {
+            "state": "unknown",
+            "score": 0,
+            "accuracy": 0.0
+        }
+
+    def __onOpen(self, ws):
+        Logger.Info("Connected to WebSocket osu! server")
+        with self.__connected_lock:
+            self.__isConnected = True
+
+    def __onClose(self, ws, close_status_code, close_msg):
+        Logger.Info(
+            f"WebSocket connection closed: {close_status_code} {close_msg}")
+        with self.__connected_lock:
+            self.__isConnected = False
+
+    def __onError(self, ws: WebSocketApp, error):
+        Logger.Error(f"WebSocket error occurred: {error!r}")
+        ws.close()
+
+    def __onMessage(self, ws, message: str):
+        Logger.Debug(f"Received WebSocket data: {message!r}")
+        with self.__lock:
+            self.__data = json.loads(message)
+
+    def Start(self):
+        self.__thread = threading.Thread(
+            target=self.__app.run_forever, name="WebSocketClient", daemon=True)
+        self.__thread.start()
+
+    def Close(self):
+        self.__app.close()
+        if self.__thread is not None:
+            self.__thread.join()
+
+    def GetData(self):
+        with self.__lock:
+            return self.__data
+
+    @property
+    def IsConnected(self):
+        with self.__connected_lock:
+            return self.__isConnected
+
+
+class GameContext(contextlib.AbstractContextManager["GameContext"]):
+    def __init__(self):
+        self.__client = WebSocketClient(
+            os.getenv("OSU_WS_URL", "ws://127.0.0.1:7272"))
+
+    @property
+    def GameState(self) -> GameState:
+        data = self.__client.GetData()
+        return {
+            "score": data["score"],
+            "accuracy": data["accuracy"],
+            "state": PlayerState(data["state"])
+        }
+
+    @property
+    def isClientConnected(self) -> bool:
+        return self.__client.IsConnected
+
+    @override
+    def __enter__(self):
+        self.__client.Start()
+        while not self.__client.IsConnected:
+            sleep(0.5)
+        return super().__enter__()
+
+    @override
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.__client.Close()

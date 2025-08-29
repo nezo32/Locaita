@@ -1,11 +1,11 @@
-import os
-from log.logger import Logger
-from scripts.callable_script import CallableScript
+from locaita.modules.osu import OsuModule
+from scripts import CallableScript
 
 
 class OsuTrainScript(CallableScript):
     def _start(self):
-        Logger.Info("my info")
+        module = OsuModule()
+        module.Learn()
 
 
 def main():
