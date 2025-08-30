@@ -1,5 +1,5 @@
-from locaita.modules.osu import OsuModule
 from scripts import CallableScript
+from locaita.modules.osu import OsuModule
 
 
 class OsuTrainScript(CallableScript):

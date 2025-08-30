@@ -1,12 +1,12 @@
-import json
 import os
+import json
 import threading
 import contextlib
 from time import sleep
-from typing import Literal, TypedDict, override
-from websocket import WebSocketApp
-from locaita.modules.osu.states import GameState, PlayerState
 from log.logger import Logger
+from websocket import WebSocketApp
+from typing import Literal, TypedDict, override
+from locaita.modules.osu.states import GameState, PlayerState
 
 
 class WebSocketDTO(TypedDict):
