@@ -9,5 +9,4 @@ class OsuModule:
     def Learn(self):
         with GameContext() as ctx:
             while ctx.isClientConnected:
-                print(ctx.GameState["state"])
                 sleep(1)

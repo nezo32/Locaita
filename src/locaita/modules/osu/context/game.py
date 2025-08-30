@@ -29,7 +29,7 @@ class WebSocketClient:
         self.__connected_lock = threading.Lock()
         self.__thread = None
 
-        self.__isConnected = False
+        self.__isConnected = None
 
         self.__data: WebSocketDTO = {
             "state": "unknown",
@@ -98,8 +98,10 @@ class GameContext(contextlib.AbstractContextManager["GameContext"]):
     @override
     def __enter__(self):
         self.__client.Start()
-        while not self.__client.IsConnected:
+
+        while self.__client.IsConnected is None:
             sleep(0.5)
+
         return super().__enter__()
 
     @override
