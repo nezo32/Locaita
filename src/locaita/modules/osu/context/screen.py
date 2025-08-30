@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 from typing import TypedDict, override
 from log.logger import Logger
 from utils.threads import ThreadedClass
-from .desktop import getWindowsWithTitle
+from locaita.polyfills.desktop import getWindowsWithTitle
 
 
 class WindowPropertiesMonitor(TypedDict):
