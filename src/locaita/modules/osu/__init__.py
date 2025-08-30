@@ -1,5 +1,6 @@
 from time import sleep
-from locaita.modules.osu.context.game import GameContext
+
+from locaita.modules.osu.context import Context
 
 
 class OsuModule:
@@ -7,6 +8,7 @@ class OsuModule:
         pass
 
     def Learn(self):
-        with GameContext() as ctx:
-            while ctx.isClientConnected:
-                sleep(1)
+        with Context() as ctx:
+            while ctx.GameCTX.isClientConnected:
+
+                sleep(0.01)

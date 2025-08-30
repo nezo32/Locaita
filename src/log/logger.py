@@ -121,8 +121,8 @@ Logger.SetFormatter(ColorFormatter(),
 
 
 def handle_thread_exception(args):
-    base_logger.error("Raised exception in thread %s", args.thread.name, exc_info=(
-        args.exc_type, args.exc_value, args.exc_traceback))
+    base_logger.error("Raised exception in thread %s: %s",
+                      args.thread.name, args.exc_value)
 
 
 threading.excepthook = handle_thread_exception
