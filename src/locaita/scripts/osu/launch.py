@@ -1,7 +1,7 @@
 import os
 import subprocess
-from log.logger import Logger
-from scripts import CallableScript
+from locaita.log.logger import Logger
+from locaita.scripts import CallableScript
 
 
 class OsuLaunchScript(CallableScript):

@@ -3,9 +3,9 @@ import json
 import threading
 import contextlib
 from time import sleep
-from log.logger import Logger
 from websocket import WebSocketApp
-from utils.threads import ThreadedClass
+from locaita.log.logger import Logger
+from locaita.utils.threads import ThreadedClass
 from typing import Literal, TypedDict, override
 from locaita.modules.osu.states import GameState, PlayerState
 

@@ -77,5 +77,5 @@ url = "https://download.pytorch.org/whl/cu129"
 explicit = true
 
 [project.scripts]
-osu = "scripts.osu.launch:main"
-osu-train = "scripts.osu.train:main"
+osu = "locaita.scripts.osu.launch:main"
+osu-train = "locaita.scripts.osu.train:main"

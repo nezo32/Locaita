@@ -1,6 +1,6 @@
 import dotenv
 from abc import ABC, abstractmethod
-from scripts.utils.initial_message import Greetings
+from locaita.utils.initial_message import Greetings
 
 dotenv.load_dotenv()
 dotenv.load_dotenv(dotenv_path=".env.local", override=True)

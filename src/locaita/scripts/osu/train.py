@@ -1,6 +1,5 @@
-from log.logger import Logger
-from scripts import CallableScript
 from locaita.modules.osu import OsuModule
+from locaita.scripts import CallableScript
 
 
 class OsuTrainScript(CallableScript):

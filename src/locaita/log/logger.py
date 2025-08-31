@@ -3,8 +3,8 @@ import re
 import sys
 import logging
 import threading
-import log.levels as levels
 from dotenv import load_dotenv
+import locaita.log.levels as levels
 
 load_dotenv()
 load_dotenv(dotenv_path=".env.local", override=True)

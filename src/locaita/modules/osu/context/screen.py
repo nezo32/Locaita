@@ -7,9 +7,9 @@ import contextlib
 import numpy as np
 from time import sleep, time
 from abc import ABC, abstractmethod
+from locaita.log.logger import Logger
 from typing import TypedDict, override
-from log.logger import Logger
-from utils.threads import ThreadedClass
+from locaita.utils.threads import ThreadedClass
 from locaita.polyfills.desktop import getWindowsWithTitle
 
 

@@ -2,23 +2,6 @@
 
 LocAIta is an advanced AI-powered project with various usage directions
 
-## Project structure
-
-```
-.
-├── external/           # External dependencies and submodules
-│   └── osu_game/       # osu! game source code modified for RL training
-├── legacy/             # Legacy code and tools
-├── logs/               # Log files
-└── src/                # Source code
-    ├── locaita/        # Main project folder
-    │   └── modules/    # Project modules
-    │       └── osu/    # osu! RL module
-    ├── log/            # Logging utilities
-    ├── scripts/        # Scripts (entrypoints)
-    └── utils/          # Common utilities
-```
-
 ## Setting up
 
 Please make sure you have the following prerequisites:
