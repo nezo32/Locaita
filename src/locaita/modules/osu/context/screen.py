@@ -5,12 +5,12 @@ import mss
 import threading
 import contextlib
 import numpy as np
-import pygetwindow as gw
 from time import sleep, time
 from abc import ABC, abstractmethod
 from typing import TypedDict, override
 from log.logger import Logger
 from utils.threads import ThreadedClass
+from locaita.polyfills.desktop import getWindowsWithTitle
 
 
 class WindowPropertiesMonitor(TypedDict):
@@ -68,7 +68,7 @@ class Screen:
             return int(pf_w), int(pf_h), int(pf_x), int(pf_y)
 
         def GetWindowProperties(self) -> WindowProperties:
-            window = gw.getWindowsWithTitle("osu!")[0]
+            window = getWindowsWithTitle("osu!")[0]
             windowed = not window.isMinimized and not window.isMaximized
 
             width, height, top, left = \
