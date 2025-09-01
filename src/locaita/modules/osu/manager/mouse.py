@@ -6,8 +6,8 @@ from pyclick.humancurve import HumanCurve
 from pynput.mouse import Controller, Button
 from pyclick.humanclicker import HumanClicker
 
-MouseButtonsState = NamedTuple["MouseButtonsState", [
-    ("left", bool), ("right", bool)]]
+MouseButtonsState = NamedTuple("MouseButtonsState", [
+    ("left", bool), ("right", bool)])
 
 
 class MouseManager:
