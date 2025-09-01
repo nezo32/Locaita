@@ -20,7 +20,8 @@ COLORS = {
 
     "STRING": "\033[38;5;173m",
     "NUMBER": "\033[38;5;150m",
-    "NONE": "\033[38;5;27m"
+    "CONSTANT": "\033[38;5;27m",
+    "NONE": "\033[38;5;17m"
 }
 
 base_logger = logging.getLogger("locaita")
@@ -57,6 +58,7 @@ class ColorFormatter(logging.Formatter):
         r'([\"])(.*?)(\1)')
     NUMBER_PATTERN = re.compile(r'(\d+(?:\.\d+)?)')
     NONE_PATTERN = re.compile(r'None')
+    CONSTANTS_PATTERN = re.compile(r'[A-Z]+(?:_[A-Z]+)')
 
     def colorize_strings(self, text: str) -> str:
         def repl(match):
@@ -73,10 +75,16 @@ class ColorFormatter(logging.Formatter):
             return f"{COLORS['NONE']}{match.group(0)}{RESET}"
         return self.NONE_PATTERN.sub(repl, text)
 
+    def colorize_consts(self, text: str):
+        def repl(match):
+            return f"{COLORS['CONSTANT']}{match.group(0)}{RESET}"
+        return self.CONSTANTS_PATTERN.sub(repl, text)
+
     def colorize(self, text):
         x = self.colorize_number(text)
         x = self.colorize_strings(x)
         x = self.colorize_none(x)
+        x = self.colorize_consts(x)
         return x
 
     def format(self, record: logging.LogRecord) -> str:

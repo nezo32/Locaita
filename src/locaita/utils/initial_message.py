@@ -41,7 +41,6 @@ def Greetings(message: str, is_cow: Optional[bool] = False):
         def wrapper(*args, **kwargs):
             __cow_message(message) if is_cow is not None and is_cow else __3d_message(
                 message)
-            result = function(*args, **kwargs)
-            return result
+            return function(*args, **kwargs)
         return wrapper
     return decorator

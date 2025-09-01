@@ -8,8 +8,8 @@ import numpy as np
 from time import sleep, time
 from abc import ABC, abstractmethod
 from locaita.log.logger import Logger
-from typing import TypedDict, override
 from locaita.utils.threads import ThreadedClass
+from typing import TypedDict, override
 from locaita.polyfills.desktop import getWindowsWithTitle
 
 
@@ -23,21 +23,32 @@ class WindowPropertiesMonitor(TypedDict):
 class WindowProperties(TypedDict):
     downscaled_play_area: tuple[int, int]
     play_area: WindowPropertiesMonitor
+    window: WindowPropertiesMonitor
 
 
 class Screen:
     class ScreenTaker(ABC):
-        def __init__(self, downscale_multiplier=5):
-            super().__init__()
+        def __init__(self, downscale_multiplier: int, **kwargs):
+            super().__init__(**kwargs)
             self.downscale_multiplier = downscale_multiplier
             self.offset_top, self.offset_left, self.offset_cut_bottom = 0, 0, 0
-
+            is_preview_setted = os.getenv(
+                "OSU_WINDOW_PREVIEW", "NONE") == "SHOW"
+            self.ShowPreview = self.__preview if is_preview_setted else self.__empty
+            if is_preview_setted:
+                Logger.Info("Preview will be displayed")
             self.__initializeOffsets()
 
         @property
         @abstractmethod
         def Data(self):
             pass
+
+        def __empty(self, *args, **kwargs):
+            pass
+
+        def __preview(self, image):
+            cv2.imshow("Preview", image)
 
         def __initializeOffsets(self):
             offsets = os.getenv("OSU_WINDOW_OFFSET", "0,0")
@@ -67,8 +78,11 @@ class Screen:
 
             return int(pf_w), int(pf_h), int(pf_x), int(pf_y)
 
+        def GetWindow(self):
+            return getWindowsWithTitle("osu!")[0]
+
         def GetWindowProperties(self) -> WindowProperties:
-            window = getWindowsWithTitle("osu!")[0]
+            window = self.GetWindow()
             windowed = not window.isMinimized and not window.isMaximized
 
             width, height, top, left = \
@@ -84,6 +98,12 @@ class Screen:
                 play_area_width // self.downscale_multiplier, play_area_height // self.downscale_multiplier)
 
             return {
+                "window": {
+                    "width": width,
+                    "height": height,
+                    "top": top,
+                    "left": left
+                },
                 "play_area": {
                     "top": play_area_top,
                     "left": play_area_left,
@@ -104,7 +124,7 @@ class Screen:
             Logger.Debug(f"Tranformed image shape: {image.shape}")
 
     class Grab(ScreenTaker):
-        def __init__(self, downscale_multiplier=5):
+        def __init__(self, downscale_multiplier: int):
             super().__init__(downscale_multiplier)
             self.sct = mss.mss()
 
@@ -119,8 +139,9 @@ class Screen:
             cv2.destroyAllWindows()
 
     class Capture(ThreadedClass, ScreenTaker):
-        def __init__(self, fps=60):
-            super().__init__()
+        def __init__(self, downscale_multiplier: int, fps=60):
+            super().__init__(name="ScreenCapture",
+                             downscale_multiplier=downscale_multiplier)
 
             self.fps = fps
             self.frame_delta = 1 / fps
@@ -138,34 +159,44 @@ class Screen:
             with mss.mss() as sct:
                 with self.ready_lock:
                     self.is_ready = True
+
                 next_frame = time()
-                while not self.cancellation_token.IsCancelled():
+                while not self.cancellation_token.is_set():
                     next_frame += self.frame_delta
                     window = self.GetWindowProperties()
-                    image = self.TransformImage(window,
-                                                np.array(sct.grab(window["play_area"])))
+                    image = np.array(sct.grab(window["play_area"]))
+                    self.ShowPreview(image)
+                    image = self.TransformImage(window, image)
                     with self.lock:
                         self.__thread_data = image
 
                     wait_ms = max(int((next_frame - time()) * 1000), 1)
-                    if (cv2.waitKey(wait_ms) % 256) == ord('\\'):
-                        break
+                    cv2.waitKey(wait_ms)
 
         def _ThreadStart(self):
             pass
 
         def _ThreadStop(self):
-            self.cancellation_token.Cancel()
+            sleep(0.5)
             cv2.destroyAllWindows()
 
 
 class ScreenContext(contextlib.AbstractContextManager["ScreenContext"]):
     def __init__(self):
-        self.__st: Screen.Grab | Screen.Capture = Screen.Grab()
+        self.__st: Screen.Grab | Screen.Capture = Screen.Capture(
+            downscale_multiplier=5)
 
     @property
     def ScreenData(self):
         return self.__st.Data
+
+    @property
+    def WindowProperties(self):
+        return self.__st.GetWindowProperties()
+
+    @property
+    def Window(self):
+        return self.__st.GetWindow()
 
     @override
     def __enter__(self):

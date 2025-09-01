@@ -1,7 +1,7 @@
 import contextlib
 from typing import override
 from locaita.modules.osu.context.game import GameContext
-from locaita.modules.osu.context.screen import ScreenContext
+from locaita.modules.osu.context.screen import Screen, ScreenContext
 
 
 class Context(contextlib.AbstractContextManager["Context"]):
