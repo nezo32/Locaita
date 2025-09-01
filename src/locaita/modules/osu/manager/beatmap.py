@@ -1,17 +1,19 @@
 from enum import Enum
+from PIL import Image
 import pyautogui as py
 from time import sleep
-from locaita.log.logger import Logger
 from typing import Optional, TypedDict
 from pynput.keyboard import Controller, Key
+
+from locaita.log.logger import Logger
+from locaita.modules.osu.context import Context
 from locaita.modules.osu.states import PlayerState
-from locaita.modules.osu.context.game import GameContext
-from locaita.modules.osu.context.screen import ScreenContext
 
 
 class RangeSearch(TypedDict):
-    s_from: int
-    s_to: int
+    s_from: int | float
+    s_to: int | float
+    full_range: bool
 
 
 class ModsHotkeys(Enum):
@@ -30,7 +32,7 @@ class ModsHotkeys(Enum):
 def ActivateOsuWindow(func):
     def wrapper(*args, **kwargs):
         self: BeatmapManager = args[0]
-        window = self.sCTX.Window
+        window = self.ctx.ScreenCTX.Window
         if hasattr(window, "activate"):
             window.activate()
         return func(*args, **kwargs)
@@ -41,7 +43,7 @@ def CheckState(check_state: PlayerState):
     def decorator(function):
         def wrapper(*args, **kwargs):
             self: BeatmapManager = args[0]
-            state = self.gCTX.GameState["state"]
+            state = self.ctx.GameCTX.GameState["state"]
             if state != check_state:
                 Logger.Error(
                     f'Invalid player state: {state.name}. Expected: {check_state.name}')
@@ -52,10 +54,11 @@ def CheckState(check_state: PlayerState):
 
 
 class BeatmapManager:
-    def __init__(self, sCTX: ScreenContext, gCTX: GameContext):
+    def __init__(self, ctx: Context):
         self.controller = Controller()
-        self.sCTX = sCTX
-        self.gCTX = gCTX
+        self.ctx = ctx
+        self.skipImage = Image.open(
+            "src/locaita/modules/osu/manager/images/skip.jpg")
 
     def __click(self, x=None, y=None, clicks=1, interval=0.5):
         for _ in range(clicks):
@@ -64,37 +67,57 @@ class BeatmapManager:
             py.mouseUp()
             sleep(interval)
 
-    def __timeout(self):
-        sleep(0.2)
+    def __timeout(self, timeout=0.2):
+        sleep(timeout)
 
     def __press_button(self, button: Key):
         self.controller.press(button)
         self.__timeout()
         self.controller.release(button)
 
-    def __getRange(self, key: str, range: Optional[RangeSearch] = None, with_floats=False):
+    def __getRange(self, key: str, range: Optional[RangeSearch] = None):
         if range == None:
             return ""
-        return f"{key}>{range['s_from']}{".01" if with_floats else ""} {key}<{range["s_to"]}{".99" if with_floats else ""}"
+        return f"{key}>{range['s_from']}{".01" if range['full_range'] == True else ""} {key}<{range["s_to"]}{".99" if range['full_range'] == True else ""}"
+
+    @ActivateOsuWindow
+    @CheckState(PlayerState.PLAYING)
+    def SkipMapBegining(self):
+        try:
+            box = py.locateOnScreen(self.skipImage, confidence=0.8)
+            if box != None:
+                self.__press_button(Key.space)
+        except:
+            pass
 
     @ActivateOsuWindow
     @CheckState(PlayerState.SONG_SELECT)
-    def SearchMaps(self, raw_search: Optional[str] = None, stars: Optional[RangeSearch] = None, length: Optional[RangeSearch] = None):
-        search = raw_search if raw_search != None else f"{self.__getRange("stars", stars, True)} {self.__getRange("length", length)}"
+    def SearchMaps(self, raw_search: Optional[str] = None, **kwargs: RangeSearch):
+        """
+        Useful range filters: ar, cs, od, hp, stars, length
+
+        https://osu.ppy.sh/wiki/en/Beatmap_search
+        """
+        kwargs_search = []
+        for key, value in kwargs.items():
+            kwargs_search.append(self.__getRange(key, value))
+        search = raw_search if raw_search != None else f"{" ".join(kwargs_search)}"
         Logger.Info(f'Searching maps with: {search}')
 
         # Clearing search input
         self.controller.type("a")
         self.__press_button(Key.esc)
-
         self.__timeout()
+
         self.controller.type(search)
+        self.__timeout(2)
 
     @ActivateOsuWindow
     @CheckState(PlayerState.SONG_SELECT)
     def ShuffleMaps(self):
         Logger.Info(f'Shuffle maps')
-        self.__timeout()
+        self.__press_button(Key.f2)
+        self.__timeout(2)
 
     @ActivateOsuWindow
     @CheckState(PlayerState.SONG_SELECT)
@@ -139,11 +162,11 @@ class BeatmapManager:
     @ActivateOsuWindow
     def ToBeatmapList(self):
         Logger.Info("Moving to beatmap list")
-        window = self.sCTX.WindowProperties["window"]
+        window = self.ctx.ScreenCTX.WindowProperties["window"]
         x = window["left"] + window["width"] // 2
         y = window["top"] + window["height"] // 2
 
-        state = self.gCTX.GameState["state"]
+        state = self.ctx.GameCTX.GameState["state"]
         if state == PlayerState.SONG_SELECT:
             Logger.Info("Already on beatmap list. Skipping")
             self.__click(x, y, clicks=1, interval=0.2)

@@ -1,9 +1,9 @@
 import os
 import dotenv
 import signal
-import threading
 import traceback
 from abc import ABC, abstractmethod
+
 from locaita.log.logger import Logger
 from locaita.utils.threads import ClearAllThreads
 from locaita.utils.initial_message import Greetings

@@ -1,9 +1,8 @@
 import os
 import subprocess
-from time import sleep
 from locaita.log.logger import Logger
 from locaita.modules.osu.context import Context
-from locaita.modules.osu.manager.beatmap import BeatmapManager, ModsHotkeys
+from locaita.modules.osu.ai.environment import Environment
 
 
 class OsuModule:
@@ -33,13 +32,5 @@ class OsuModule:
 
     def Learn(self):
         with Context() as ctx:
-            bm = BeatmapManager(ctx.ScreenCTX, ctx.GameCTX)
-            bm.ToBeatmapList()
-            bm.SearchMaps(stars={"s_from": 1, "s_to": 1},
-                          length={"s_from": 90, "s_to": 180})
-            bm.ClearMods()
-            bm.SelectMods([ModsHotkeys.DC, ModsHotkeys.FL, ModsHotkeys.EZ])
-            # bm.EnterRandomMap()
-            """ while ctx.GameCTX.isClientConnected:
-                ctx.ScreenCTX.ScreenData
-                sleep(0.05) """
+            env = Environment(ctx)
+            env.reset()

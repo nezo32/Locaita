@@ -4,9 +4,10 @@ import threading
 import contextlib
 from time import sleep
 from websocket import WebSocketApp
+from typing import Literal, TypedDict, override
+
 from locaita.log.logger import Logger
 from locaita.utils.threads import ThreadedClass
-from typing import Literal, TypedDict, override
 from locaita.modules.osu.states import GameState, PlayerState
 
 

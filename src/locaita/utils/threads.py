@@ -1,6 +1,7 @@
 import threading
 from typing import Optional
 from abc import ABC, abstractmethod
+
 from locaita.log.logger import Logger
 
 
