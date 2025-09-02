@@ -72,7 +72,7 @@ class BeatmapManager:
 
     def __press_button(self, button: Key):
         self.controller.press(button)
-        self.__timeout()
+        self.__timeout(0.3)
         self.controller.release(button)
 
     def __getRange(self, key: str, range: Optional[RangeSearch] = None):
@@ -129,7 +129,7 @@ class BeatmapManager:
     @CheckState(PlayerState.SONG_SELECT)
     def SwitchOpenMods(self):
         self.__press_button(Key.f1)
-        self.__timeout()
+        self.__timeout(0.5)
 
     @ActivateOsuWindow
     @CheckState(PlayerState.SONG_SELECT)
