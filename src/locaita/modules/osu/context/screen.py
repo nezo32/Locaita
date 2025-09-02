@@ -25,6 +25,7 @@ class WindowProperties(TypedDict):
     downscaled_play_area: tuple[int, int]
     play_area: WindowPropertiesMonitor
     window: WindowPropertiesMonitor
+    downscale_multiplier: int
 
 
 class Screen:
@@ -111,6 +112,7 @@ class Screen:
                     "width": play_area_width,
                     "height": play_area_height
                 },
+                "downscale_multiplier": self.downscale_multiplier,
                 "downscaled_play_area": (downscaled_width, downscaled_height)
             }
 
@@ -184,7 +186,7 @@ class Screen:
 
 class ScreenContext(contextlib.AbstractContextManager["ScreenContext"]):
     def __init__(self):
-        self.__st: Screen.Grab | Screen.Capture = Screen.Capture(
+        self.__st: Screen.Grab | Screen.Capture = Screen.Grab(
             downscale_multiplier=5)
 
     @property

@@ -46,7 +46,7 @@ class MouseManager:
             self.__mouse.release(Button.left)
             self.__mouse.press(Button.right)
             self.__leftButton, self.__rightButton = False, True
-        else:  # ToDo: I could use this to make a delayed click instead?
+        else:
             self.__mouse.press(Button.left)
             self.__mouse.press(Button.right)
             self.__leftButton, self.__rightButton = True, True
@@ -58,7 +58,3 @@ class MouseManager:
 
     def __mouseMoveThread(self, x, y, t):
         self.__humanClicker.move((x, y), t, self.__getCurve(x, y))
-
-    def __del__(self):
-        if self.__thread is not None:
-            self.__thread.join()

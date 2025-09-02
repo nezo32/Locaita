@@ -67,7 +67,7 @@ class BeatmapManager:
             py.mouseUp()
             sleep(interval)
 
-    def __timeout(self, timeout=0.2):
+    def __timeout(self, timeout=0.3):
         sleep(timeout)
 
     def __press_button(self, button: Key):
@@ -179,4 +179,4 @@ class BeatmapManager:
             Logger.Error("Not on main menu or result screen")
             raise Exception("Unable to move to beatmap list")
 
-        self.__click(x, y, clicks=4, interval=0.2)
+        self.__click(x, y, clicks=4, interval=0.4)

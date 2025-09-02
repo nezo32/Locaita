@@ -5,21 +5,6 @@ from abc import ABC, abstractmethod
 from locaita.log.logger import Logger
 
 
-class CancellationToken:
-    def __init__(self):
-        self.lock = threading.Lock()
-        self._cancelled = False
-
-    def Cancel(self):
-        with self.lock:
-            self._cancelled = True
-
-    @property
-    def IsCancelled(self):
-        with self.lock:
-            return self._cancelled
-
-
 class ThreadedClass(ABC):
     def __init__(self, name: str, daemon=True, **kwargs):
         super().__init__(**kwargs)
