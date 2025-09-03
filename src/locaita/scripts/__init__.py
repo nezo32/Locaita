@@ -19,6 +19,7 @@ class ShutdownController:
     def _handle(self, signum, frame):
         Logger.Info(f"Shutdown signal received: {signal.Signals(signum).name}")
         ClearAllThreads()
+        raise Exception("shutdown signal")
 
     def __enter__(self):
         caught = [signal.SIGINT, signal.SIGTERM]

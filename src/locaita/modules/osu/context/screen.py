@@ -125,6 +125,7 @@ class Screen:
             # Normalization
             image = np.expand_dims(np.asarray(image, dtype=int) / 255, axis=-1)
             Logger.Debug(f"Tranformed image shape: {image.shape}")
+            return image
 
     class Grab(ScreenTaker):
         def __init__(self, downscale_multiplier: int):
@@ -187,7 +188,7 @@ class Screen:
 class ScreenContext(contextlib.AbstractContextManager["ScreenContext"]):
     def __init__(self):
         self.__st: Screen.Grab | Screen.Capture = Screen.Grab(
-            downscale_multiplier=5)
+            downscale_multiplier=12)
 
     @property
     def ScreenData(self):

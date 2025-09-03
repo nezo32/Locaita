@@ -91,6 +91,12 @@ class BeatmapManager:
             pass
 
     @ActivateOsuWindow
+    @CheckState(PlayerState.RESULT_SCREEN)
+    def BackToBeatmapList(self):
+        self.__press_button(Key.esc)
+        self.__timeout(1)
+
+    @ActivateOsuWindow
     @CheckState(PlayerState.SONG_SELECT)
     def SearchMaps(self, raw_search: Optional[str] = None, **kwargs: RangeSearch):
         """

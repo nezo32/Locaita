@@ -1,12 +1,11 @@
 DDQN:
   learning_rate: 0.0005 # alpha
   discount_rate: 0.999 # gamma
-  steps_to_sync: 10000
+  steps_to_sync: 20000
   memory_capacity: 1000000
-  mini_batch_size: 32
-  epsilon_init: 1
-  epsilon_decay: 0.9995
-  epsilon_min: 0.01
+  batch_size: 32
+  gradient_clipping_norm: 10
+  min_experience: 10000
   tensorboard_events_path: "./tensorboard"
   weights_path: "./weights"
   memory_path: "./memory"
