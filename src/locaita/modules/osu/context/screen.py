@@ -123,7 +123,7 @@ class Screen:
             image = cv2.resize(image, window["downscaled_play_area"],
                                interpolation=cv2.INTER_AREA)
             # Normalization
-            image = np.expand_dims(np.asarray(image, dtype=int) / 255, axis=-1)
+            image = np.expand_dims(np.asarray(image, dtype=int) / 255, axis=0)
             Logger.Debug(f"Tranformed image shape: {image.shape}")
             return image
 
@@ -188,11 +188,11 @@ class Screen:
 class ScreenContext(contextlib.AbstractContextManager["ScreenContext"]):
     def __init__(self):
         self.__st: Screen.Grab | Screen.Capture = Screen.Grab(
-            downscale_multiplier=12)
+            downscale_multiplier=15)
 
     @property
     def ScreenData(self):
-        return self.__st.Data
+        return np.float32(self.__st.Data)
 
     @property
     def WindowProperties(self):

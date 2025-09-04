@@ -51,6 +51,10 @@ class MouseManager:
             self.__mouse.press(Button.right)
             self.__leftButton, self.__rightButton = True, True
 
+    def MoveClick(self, x, y, click: Literal[0, 1, 2, 3]):
+        pyautogui.moveTo(x, y)
+        self.MouseClick(click)
+
     def MouseMove(self, x, y, t=0.05):
         time.sleep(0.005)
         self.__thread = Thread(target=self.__mouseMoveThread, args=[x, y, t])

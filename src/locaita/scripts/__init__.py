@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import dotenv
 import signal
 import traceback
@@ -40,6 +41,9 @@ class ShutdownController:
 class CallableScript(ABC):
     def __init__(self):
         super().__init__()
+
+        Path("logs").mkdir(
+            parents=True, exist_ok=True)
 
     @abstractmethod
     def _start(self):

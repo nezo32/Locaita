@@ -6,13 +6,12 @@ import datetime
 from pathlib import Path
 from typing import TypedDict
 import torch.utils.tensorboard
-from abc import ABC, abstractmethod
 
 from locaita.log.logger import Logger
-from locaita.modules.osu.ai.environment import Environment
 from locaita.modules.osu.context import Context
 from locaita.modules.osu.ai.network import OsuNetwork
 from locaita.modules.osu.ai.memory import ReplayBuffer
+from locaita.modules.osu.ai.environment import Environment
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -23,10 +22,15 @@ class Hyperparameters(TypedDict):
 
     steps_to_sync: int
     min_experience: int
+    learn_loops: int
 
     memory_capacity: int
     batch_size: int
     gradient_clipping_norm: float
+
+    epsilon_init: float
+    epsilon_decay: float
+    epsilon_min: float
 
     tensorboard_events_path: str
     weights_path: str
@@ -93,6 +97,7 @@ class BaseAgent:
         Logger.Info(f"Data successfully saved")
 
     def ReplaceTarget(self):
+        Logger.Info("Replacing target with current network")
         if hasattr(self, "target_network") and type(self.target_network) == torch.nn.Module:
             self.target_network.load_state_dict(self.network.state_dict())
 
@@ -142,10 +147,11 @@ class DDQN(BaseAgent):
 
         Logger.Info("DDQN agent successfully initialized")
 
-    def SelectAction(self, state, controls_state):
-        action: torch.Tensor = self.network(state, controls_state).detach()
+    def SelectAction(self, state: torch.Tensor, controls_state: torch.Tensor):
+        action: torch.Tensor = self.network(
+            state.to(device), controls_state.to(device)).detach()
         _, action = torch.max(action, 1)
-        return action
+        return action.cpu()
 
     def Loss(self, input, target):
         return torch.clamp(torch.nn.functional.mse_loss(input, target), 0, 1.0)
@@ -153,34 +159,52 @@ class DDQN(BaseAgent):
     def Optimize(self):
         if len(self.memory) < self.hyperparams["min_experience"]:
             return
-        state, action, reward, new_state, control_state, new_control_state = self.memory.Sample(
-            self.hyperparams["batch_size"])
 
-        state = torch.tensor(state, device=device)
-        action = torch.tensor(action, device=device)
-        reward = torch.tensor(reward, device=device)
-        new_state = torch.tensor(new_state, device=device)
-        control_state = torch.tensor(control_state, device=device)
-        new_control_state = torch.tensor(new_control_state, device=device)
+        Logger.Info("Optimizing DDQN agent")
+        self.network = self.network.cpu()
+        self.target_network = self.target_network.cpu()
+        torch.cuda.empty_cache()
 
-        s = self.network(state, control_state)
-        state_action_values = torch.stack(
-            [s[i, action[i]] for i in range(self.hyperparams["batch_size"])])
-        next_state_values = self.target_network(
-            new_state, new_control_state).detach().max(1)[0]
-        expected_state_action_values = reward + \
-            self.hyperparams["discount_rate"] * next_state_values
-        loss = self.Loss(state_action_values, expected_state_action_values)
+        for _ in range(self.hyperparams["learn_loops"]):
+            state, action, reward, new_state, control_state, new_control_state = self.memory.Sample(
+                self.hyperparams["batch_size"])
 
-        self.optimizer.zero_grad()
-        loss.backward()
-        torch.nn.utils.clip_grad_norm_(
-            self.network.parameters(), self.hyperparams["gradient_clipping_norm"])
-        self.optimizer.step()
+            state = state.to(device)
+            action = action.to(device)
+            reward = reward.to(device)
+            new_state = new_state.to(device)
+            control_state = control_state.to(device)
+            new_control_state = new_control_state.to(device)
 
-        with torch.no_grad():
-            self.tensorboard.add_scalar(
-                "loss", torch.mean(loss), self.step)
-            self.tensorboard.add_scalar(
-                "rewards", torch.mean(reward), self.step)
-            self.step += 1
+            s = self.network(state, control_state)
+            state_action_values = torch.stack(
+                [s[i, action[i]] for i in range(self.hyperparams["batch_size"])])
+            next_state_values = self.target_network(
+                new_state, new_control_state).detach().max(1)[0]
+            expected_state_action_values = reward + \
+                self.hyperparams["discount_rate"] * next_state_values
+            loss = self.Loss(state_action_values, expected_state_action_values)
+
+            self.optimizer.zero_grad()
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(
+                self.network.parameters(), self.hyperparams["gradient_clipping_norm"])
+            self.optimizer.step()
+
+            with torch.no_grad():
+                self.summary_writer.add_scalar(
+                    "loss", torch.mean(loss), self.step)
+                self.summary_writer.add_scalar(
+                    "rewards", torch.mean(reward), self.step)
+                self.step += 1
+
+            state = state.cpu()
+            action = action.cpu()
+            reward = reward.cpu()
+            new_state = new_state.cpu()
+            control_state = control_state.cpu()
+            new_control_state = new_control_state.cpu()
+            torch.cuda.empty_cache()
+
+        self.network = self.network.to(device)
+        self.target_network = self.target_network.to(device)

@@ -28,8 +28,6 @@ class Environment:
         self.control_space = 4
         self.action_space: spaces.Discrete = spaces.Discrete(
             self.playarea["width"] * self.playarea["height"] * self.control_space)
-        self.observation_space = spaces.Box(
-            low=0, high=1, shape=(*self.downscaled_playarea, 1))
 
         self.previous_score = torch.tensor(0, dtype=torch.float32)
         self.previous_accuracy = torch.tensor(100, dtype=torch.float32)
@@ -48,9 +46,8 @@ class Environment:
             self.action_space.n // self.control_space))
         y, x = divmod(xy, self.playarea["width"])
 
-        self.mouse_manager.MouseClick(int(click))
-        self.mouse_manager.MouseMove(
-            int(x + self.playarea["left"]), int(y + self.playarea["top"]))
+        self.mouse_manager.MoveClick(
+            int(x + self.playarea["left"]), int(y + self.playarea["top"]), int(click))
 
         left, right = self.mouse_manager.ButtonsState
         return torch.tensor([[left, right, x / self.playarea["width"], y / self.playarea["height"]]], dtype=torch.float32)
@@ -64,7 +61,7 @@ class Environment:
             data["score"], dtype=torch.float32), torch.tensor(data["accuracy"], dtype=torch.float32)
         reward = self.GetReward(score, accuracy)
         self.previous_accuracy, self.previous_score = accuracy, score
-        return torch.tensor(state, dtype=torch.float32), new_controls, reward
+        return torch.from_numpy(state).unsqueeze_(0), new_controls, reward
 
     def Reset(self):
         self.mouse_manager.ResetButtons()
@@ -81,7 +78,7 @@ class Environment:
 
         self.previous_score = torch.tensor(0)
         self.previous_accuracy = torch.tensor(100.0)
-        return torch.tensor(self.ctx.ScreenCTX.ScreenData, dtype=torch.float32), torch.tensor([[0.5, 0.5, 0.0, 0.0]], dtype=torch.float32)
+        return torch.from_numpy(self.ctx.ScreenCTX.ScreenData).unsqueeze_(0), torch.tensor([[0.5, 0.5, 0.0, 0.0]], dtype=torch.float32)
 
     def ResetAfter(self):
         self.beatmap_manager.BackToBeatmapList()
