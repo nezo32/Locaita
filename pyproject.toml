@@ -32,7 +32,6 @@ dependencies = [
     "pyclick==0.0.2",
     "pycowsay==0.0.0.2",
     "pycparser==2.22",
-    "pydirectinput>=1.0.4",
     "pyfiglet==1.0.4",
     "pygetwindow==0.0.9",
     "pymsgbox==1.0.9",
@@ -50,7 +49,9 @@ dependencies = [
     "tensorboard==2.20.0",
     "tensorboard-data-server==0.7.2",
     "torch==2.8.0+cu129",
+    "torchrl>=0.9.2",
     "torchvision==0.23.0+cu129",
+    "torchviz>=0.0.3",
     "typing-extensions==4.12.2",
     "websocket==0.2.1",
     "websocket-client>=1.8.0",
@@ -81,3 +82,5 @@ explicit = true
 [project.scripts]
 osu = "locaita.scripts.osu.launch:main"
 osu-train = "locaita.scripts.osu.train:main"
+osu-clear = "locaita.scripts.osu.clear:main"
+

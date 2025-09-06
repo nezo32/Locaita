@@ -30,9 +30,8 @@ class WindowProperties(TypedDict):
 
 class Screen:
     class ScreenTaker(ABC):
-        def __init__(self, downscale_multiplier: int, **kwargs):
+        def __init__(self, **kwargs):
             super().__init__(**kwargs)
-            self.downscale_multiplier = downscale_multiplier
             self.offset_top, self.offset_left, self.offset_cut_bottom = 0, 0, 0
             is_preview_setted = os.getenv(
                 "OSU_WINDOW_PREVIEW", "NONE") == "SHOW"
@@ -96,8 +95,9 @@ class Screen:
             play_area_width, play_area_height, play_area_left, play_area_top = self.__get_playfield_rect(
                 width, height, left, top)
 
-            downscaled_width, downscaled_height = (
-                play_area_width // self.downscale_multiplier, play_area_height // self.downscale_multiplier)
+            downscaled_width, downscaled_height = (173, 130)
+            self.downscale_multiplier = play_area_width // (
+                downscaled_width - 1)
 
             return {
                 "window": {
@@ -107,10 +107,10 @@ class Screen:
                     "left": left
                 },
                 "play_area": {
-                    "top": play_area_top,
-                    "left": play_area_left,
                     "width": play_area_width,
-                    "height": play_area_height
+                    "height": play_area_height,
+                    "top": play_area_top,
+                    "left": play_area_left
                 },
                 "downscale_multiplier": self.downscale_multiplier,
                 "downscaled_play_area": (downscaled_width, downscaled_height)
@@ -128,8 +128,8 @@ class Screen:
             return image
 
     class Grab(ScreenTaker):
-        def __init__(self, downscale_multiplier: int):
-            super().__init__(downscale_multiplier)
+        def __init__(self):
+            super().__init__()
             self.sct = mss.mss()
 
         @property
@@ -143,9 +143,8 @@ class Screen:
             cv2.destroyAllWindows()
 
     class Capture(ThreadedClass, ScreenTaker):
-        def __init__(self, downscale_multiplier: int, fps=60):
-            super().__init__(name="ScreenCapture",
-                             downscale_multiplier=downscale_multiplier)
+        def __init__(self, fps=60):
+            super().__init__(name="ScreenCapture")
 
             self.fps = fps
             self.frame_delta = 1 / fps
@@ -187,8 +186,7 @@ class Screen:
 
 class ScreenContext(contextlib.AbstractContextManager["ScreenContext"]):
     def __init__(self):
-        self.__st: Screen.Grab | Screen.Capture = Screen.Grab(
-            downscale_multiplier=15)
+        self.__st: Screen.Grab | Screen.Capture = Screen.Grab()
 
     @property
     def ScreenData(self):

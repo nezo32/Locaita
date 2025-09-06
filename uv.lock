@@ -106,6 +106,15 @@ wheels = [
 ]
 
 [[package]]
+name = "graphviz"
+version = "0.21"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f8/b3/3ac91e9be6b761a4b30d66ff165e54439dcd48b83f4e20d644867215f6ca/graphviz-0.21.tar.gz", hash = "sha256:20743e7183be82aaaa8ad6c93f8893c923bd6658a04c32ee115edb3c8a835f78", size = 200434, upload-time = "2025-06-15T09:35:05.824Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/91/4c/e0ce1ef95d4000ebc1c11801f9b944fa5910ecc15b5e351865763d8657f8/graphviz-0.21-py3-none-any.whl", hash = "sha256:54f33de9f4f911d7e84e4191749cac8cc5653f815b06738c54db9a15ab8b1e42", size = 47300, upload-time = "2025-06-15T09:35:04.433Z" },
+]
+
+[[package]]
 name = "greenlet"
 version = "3.2.4"
 source = { registry = "https://pypi.org/simple" }
@@ -163,6 +172,18 @@ wheels = [
 ]
 
 [[package]]
+name = "importlib-metadata"
+version = "8.7.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "zipp" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/76/66/650a33bd90f786193e4de4b3ad86ea60b53c89b669a5c7be931fac31cdb0/importlib_metadata-8.7.0.tar.gz", hash = "sha256:d13b81ad223b890aa16c5471f2ac3056cf76c5f10f82d6f9292f0b415f389000", size = 56641, upload-time = "2025-04-27T15:29:01.736Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/20/b0/36bd937216ec521246249be3bf9855081de4c5e06a0c9b4219dbeda50373/importlib_metadata-8.7.0-py3-none-any.whl", hash = "sha256:e5dd1551894c77868a30651cef00984d50e1002d06942a7101d34870c5f02afd", size = 27656, upload-time = "2025-04-27T15:29:00.214Z" },
+]
+
+[[package]]
 name = "jinja2"
 version = "3.1.4"
 source = { registry = "https://pypi.org/simple" }
@@ -206,7 +227,6 @@ dependencies = [
     { name = "pyclick" },
     { name = "pycowsay" },
     { name = "pycparser" },
-    { name = "pydirectinput" },
     { name = "pyfiglet" },
     { name = "pygetwindow" },
     { name = "pymsgbox" },
@@ -224,7 +244,9 @@ dependencies = [
     { name = "tensorboard" },
     { name = "tensorboard-data-server" },
     { name = "torch" },
+    { name = "torchrl" },
     { name = "torchvision" },
+    { name = "torchviz" },
     { name = "typing-extensions" },
     { name = "websocket" },
     { name = "websocket-client" },
@@ -263,7 +285,6 @@ requires-dist = [
     { name = "pyclick", specifier = "==0.0.2" },
     { name = "pycowsay", specifier = "==0.0.0.2" },
     { name = "pycparser", specifier = "==2.22" },
-    { name = "pydirectinput", specifier = ">=1.0.4" },
     { name = "pyfiglet", specifier = "==1.0.4" },
     { name = "pygetwindow", specifier = "==0.0.9" },
     { name = "pymsgbox", specifier = "==1.0.9" },
@@ -281,7 +302,9 @@ requires-dist = [
     { name = "tensorboard", specifier = "==2.20.0" },
     { name = "tensorboard-data-server", specifier = "==0.7.2" },
     { name = "torch", specifier = "==2.8.0+cu129", index = "https://download.pytorch.org/whl/cu129" },
+    { name = "torchrl", specifier = ">=0.9.2" },
     { name = "torchvision", specifier = "==0.23.0+cu129", index = "https://download.pytorch.org/whl/cu129" },
+    { name = "torchviz", specifier = ">=0.0.3" },
     { name = "typing-extensions", specifier = "==4.12.2" },
     { name = "websocket", specifier = "==0.2.1" },
     { name = "websocket-client", specifier = ">=1.8.0" },
@@ -629,15 +652,6 @@ wheels = [
 ]
 
 [[package]]
-name = "pydirectinput"
-version = "1.0.4"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/5f/c0/cbcc5f1653d956ee2109b604747b7eaf37d59e50b41cc9dedabedf70aec6/PyDirectInput-1.0.4.tar.gz", hash = "sha256:bebe65102c69208688402f9f4cbd2ae7afc174fd2123e156e178b1304e7f80a2", size = 7486, upload-time = "2021-02-02T22:23:30.859Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/c9/8e/f909defe798270afc2241d3a8986d51459e70c37f02d2ba549627b781b2c/PyDirectInput-1.0.4-py3-none-any.whl", hash = "sha256:238bbe97f505f9c8728a47ea6a787750dbe834ec1fb42b98b3d703d827eda83e", size = 8879, upload-time = "2021-02-02T22:23:28.115Z" },
-]
-
-[[package]]
 name = "pyfiglet"
 version = "1.0.4"
 source = { registry = "https://pypi.org/simple" }
@@ -807,6 +821,17 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/79/0c/c16bc93ac2755bac0066a8ecbd2a2931a1735a6fffd99a2b9681c7e83e90/pytweening-1.2.0.tar.gz", hash = "sha256:243318b7736698066c5f362ec5c2b6434ecf4297c3c8e7caa8abfe6af4cac71b", size = 171241, upload-time = "2024-02-20T03:37:56.809Z" }
 
 [[package]]
+name = "pyvers"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "packaging" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7f/39/c5432f541e6ea1d616dfd6ef42ce02792f7eb42dd44f5ed4439dbe17a58b/pyvers-0.1.0-py3-none-any.whl", hash = "sha256:065249805ae537ddf9a2d1a8dffc6d0a12474a347d2eaa2f35ebdae92c0c8199", size = 10092, upload-time = "2025-06-08T23:46:46.219Z" },
+]
+
+[[package]]
 name = "pyyaml"
 version = "6.0.2"
 source = { registry = "https://pypi.org/simple" }
@@ -893,6 +918,29 @@ wheels = [
 ]
 
 [[package]]
+name = "tensordict"
+version = "0.9.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cloudpickle" },
+    { name = "importlib-metadata" },
+    { name = "numpy" },
+    { name = "packaging" },
+    { name = "pyvers" },
+    { name = "torch" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/63/7b/a58da9a756e1182abbb56f35832f25fae59ffd08368860648c0ff045e6c8/tensordict-0.9.1-cp313-cp313-macosx_14_0_arm64.whl", hash = "sha256:c0b60e39a885d92f5d7b03a6248dd87e4c94f6a3e28d64c1b1fa38564a26e8d7", size = 740030, upload-time = "2025-07-14T12:52:20.314Z" },
+    { url = "https://files.pythonhosted.org/packages/fe/84/ccf59b2ebbc0a1860372c66841250b0a7556f8e3fce3200dbea8ce7de902/tensordict-0.9.1-cp313-cp313-manylinux_2_28_aarch64.whl", hash = "sha256:f45dd6d0833c3da875f676fd9f96d70b0c56e4ee1c9d7055a9947d79c99465b9", size = 424984, upload-time = "2025-07-14T12:52:21.334Z" },
+    { url = "https://files.pythonhosted.org/packages/78/44/3ee04fa4d8bf3c4ce62075d424d46cc7ac1b9f1b942bcee03ae272608a14/tensordict-0.9.1-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:3ffd535fe7a0d7f66623ddce2a6e2271a18cc70da198311f807227f664f468df", size = 430167, upload-time = "2025-07-14T12:52:22.331Z" },
+    { url = "https://files.pythonhosted.org/packages/b3/50/560018ba64f7a1931e7f1dbd47219ece42e3c4390076bab4d7229c01541a/tensordict-0.9.1-cp313-cp313-win_amd64.whl", hash = "sha256:043941fbbe700493d8a172f33725f174dbbd1b92b40488b51d4ee4b18386805f", size = 474211, upload-time = "2025-07-14T12:52:23.417Z" },
+    { url = "https://files.pythonhosted.org/packages/bf/b2/2f9c045ca278953a59da31055f2f3c7552d96baf8b95104b9350eda5bcbc/tensordict-0.9.1-cp313-cp313t-macosx_14_0_arm64.whl", hash = "sha256:e0896b381c0ad5213f41b12962110dc68737f996fdabe9886e72bf5ef4466364", size = 784611, upload-time = "2025-07-14T12:52:24.763Z" },
+    { url = "https://files.pythonhosted.org/packages/bf/a0/e93333dfdda27eba6e61ea660cdf2e0bdc968f8fef4c0b627c7eadad16a2/tensordict-0.9.1-cp313-cp313t-manylinux_2_28_aarch64.whl", hash = "sha256:bb6ea57b991c5083988203b636a84e0ddeac9e2df2bd24896899b241422364dc", size = 426368, upload-time = "2025-07-14T12:52:26.894Z" },
+    { url = "https://files.pythonhosted.org/packages/02/26/72ab75eaba26b71228d4a644502e20c15cfdc35a8501cab049bc7182f49e/tensordict-0.9.1-cp313-cp313t-manylinux_2_28_x86_64.whl", hash = "sha256:1445c2d42737852a5f327c84ce0312fefb881c88852224e76aa86767aef6051c", size = 428895, upload-time = "2025-07-14T12:52:27.82Z" },
+    { url = "https://files.pythonhosted.org/packages/c6/82/8b5951d3d37cc486185366ac532ca36363a6b2f7cdbe46e7010fdae192d5/tensordict-0.9.1-cp313-cp313t-win_amd64.whl", hash = "sha256:d94c54c3b8feff5c1fff47e54a0e4829c2fb4aeeb75d8ec413913849b721f855", size = 486525, upload-time = "2025-07-14T12:52:28.76Z" },
+]
+
+[[package]]
 name = "torch"
 version = "2.8.0+cu129"
 source = { registry = "https://download.pytorch.org/whl/cu129" }
@@ -930,6 +978,28 @@ wheels = [
 ]
 
 [[package]]
+name = "torchrl"
+version = "0.9.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cloudpickle" },
+    { name = "numpy" },
+    { name = "packaging" },
+    { name = "tensordict" },
+    { name = "torch" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/87/84/0499ce67a8bd1b30089af16c106ddd8c69cd553b2d1a30408368388b13c3/torchrl-0.9.2-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:9a1ffe1d2f454b694524e5f32558a58a10919da87a104561c6ccd087398644a6", size = 1718747, upload-time = "2025-07-17T17:07:13.417Z" },
+    { url = "https://files.pythonhosted.org/packages/a0/f5/29498644927b1f9146761f4f3ad35fa6959af16e41ee526a143133925a8b/torchrl-0.9.2-cp313-cp313-manylinux_2_28_aarch64.whl", hash = "sha256:bcce03361f38869d864def752af6bab86010eeb60bedb73f480504e055fe5223", size = 1403877, upload-time = "2025-07-17T17:07:15.126Z" },
+    { url = "https://files.pythonhosted.org/packages/fc/cc/a63cd1c00ecb96393ab270bcc3f6cad2cdaa67846aebc67e8c515350230e/torchrl-0.9.2-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:6610422d448af96160362775449ad22453a76d9f5ef15f2607ed185e63ee59ca", size = 1410651, upload-time = "2025-07-17T17:07:16.229Z" },
+    { url = "https://files.pythonhosted.org/packages/69/f5/c365e738709057c8d297ec06104fca4793e860e3c7acad63babe422cf344/torchrl-0.9.2-cp313-cp313-win_amd64.whl", hash = "sha256:6c91e6b1fef31f3d20408126904b2202f1d37cb4ba3d39fcac66830c37d13a14", size = 1372038, upload-time = "2025-07-17T17:07:17.367Z" },
+    { url = "https://files.pythonhosted.org/packages/b4/e6/6a30ade56e33da16a3c7ae22e1018269da8a10a32e3f9b7399f11f57a06d/torchrl-0.9.2-cp313-cp313t-macosx_11_0_arm64.whl", hash = "sha256:8eeb0571cca8ac76eb2b818d5ed47b10e746de306af9e5c52c0bb0ebdfc80163", size = 1773110, upload-time = "2025-07-17T17:07:18.721Z" },
+    { url = "https://files.pythonhosted.org/packages/8e/e7/f798526cf38344d53e539e24de75616e814f0a9edff85faa921cb9d71b4f/torchrl-0.9.2-cp313-cp313t-manylinux_2_28_aarch64.whl", hash = "sha256:717c6631c74ef9f65801089eaf11a946d800794ab66dbeba73a8a17f9a689a2d", size = 1402524, upload-time = "2025-07-17T17:07:19.854Z" },
+    { url = "https://files.pythonhosted.org/packages/8e/42/d316f7c4c9021cf96bcca8b6b09dd77edb17a99967e4540f153156dcf454/torchrl-0.9.2-cp313-cp313t-manylinux_2_28_x86_64.whl", hash = "sha256:ae4ab524c795227ecfab8703fe2a5148558bca621e2bb9f3ecc017f456de6f2e", size = 1411016, upload-time = "2025-07-17T17:07:20.98Z" },
+    { url = "https://files.pythonhosted.org/packages/3f/1a/8548715958204306a39f7e4fa53aa00f9112a1217d8a59a255d39e6e3a78/torchrl-0.9.2-cp313-cp313t-win_amd64.whl", hash = "sha256:5fafde3cec493025946c2ef61c80ce6b5949fbbadd93393a2c9b589152683fd3", size = 1386871, upload-time = "2025-07-17T17:07:22.4Z" },
+]
+
+[[package]]
 name = "torchvision"
 version = "0.23.0+cu129"
 source = { registry = "https://download.pytorch.org/whl/cu129" }
@@ -943,6 +1013,19 @@ wheels = [
     { url = "https://download.pytorch.org/whl/cu129/torchvision-0.23.0%2Bcu129-cp313-cp313-win_amd64.whl", hash = "sha256:a486a0cee466807a17749d0b916d52088343453dc911baa20f0f459b2fa43c9a" },
     { url = "https://download.pytorch.org/whl/cu129/torchvision-0.23.0%2Bcu129-cp313-cp313t-manylinux_2_28_x86_64.whl", hash = "sha256:c718f6d2c0e61feed39763925eea3e1f42979f6b21e61276f487409168d9e352" },
     { url = "https://download.pytorch.org/whl/cu129/torchvision-0.23.0%2Bcu129-cp313-cp313t-win_amd64.whl", hash = "sha256:8218c1f614972abb4710afde96d0f70b174b235f390e165e6fd4cdd5cee6d93d" },
+]
+
+[[package]]
+name = "torchviz"
+version = "0.0.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "graphviz" },
+    { name = "torch" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/5c/80/a84e0e8877630262c3f4c8d2e7fd0647c6751afeca301cfc04a1b65ac820/torchviz-0.0.3.tar.gz", hash = "sha256:2e95f2fea7a31ec9549f2d6bbf446d75aeb6a9880fcf13e7dd843fdcdb4a3725", size = 5705, upload-time = "2024-12-02T02:46:54.671Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5e/06/bea648249802b65282414caf5e7bc94fcb6e5a3e311b537845417d19edb9/torchviz-0.0.3-py3-none-any.whl", hash = "sha256:5eab98d17cbe8a54727cfa6a527681cff613430fff8fc68f52302ca5fa26cdf1", size = 5708, upload-time = "2024-12-02T02:46:52.838Z" },
 ]
 
 [[package]]
@@ -1007,6 +1090,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/74/d4/6033a97f96fc7d7bb822dab52e2e3c9532256d7ce033fa9675734941b9ac/xlib-0.21.tar.gz", hash = "sha256:60b7cd5d90f5d5922d9ce27b61589c07d970796558d417461db7b66e366bc401", size = 146776, upload-time = "2018-01-02T09:39:40.149Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/3f/00/321541273b0ed2167b36c82be9baeb0bdc8af1c11c1b01de9436b84b5eaf/xlib-0.21-py2.py3-none-any.whl", hash = "sha256:8eee67dad83ef4b82bbbfa85d51eeb20c79d12b119fe25aa1d27bd602ff82212", size = 123811, upload-time = "2018-01-02T09:39:33.518Z" },
+]
+
+[[package]]
+name = "zipp"
+version = "3.23.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e3/02/0f2892c661036d50ede074e376733dca2ae7c6eb617489437771209d4180/zipp-3.23.0.tar.gz", hash = "sha256:a07157588a12518c9d4034df3fbbee09c814741a33ff63c05fa29d26a2404166", size = 25547, upload-time = "2025-06-08T17:06:39.4Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2e/54/647ade08bf0db230bfea292f893923872fd20be6ac6f53b2b936ba839d75/zipp-3.23.0-py3-none-any.whl", hash = "sha256:071652d6115ed432f5ce1d34c336c0adfd6a884660d1e9712a256d3d3bd4b14e", size = 10276, upload-time = "2025-06-08T17:06:38.034Z" },
 ]
 
 [[package]]

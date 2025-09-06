@@ -33,16 +33,16 @@ class MouseManager:
     def ResetButtons(self):
         self.MouseClick(0)
 
-    def MouseClick(self, click: Literal[0, 1, 2, 3]):
-        if click == 0:
+    def MouseClick(self, click: float):
+        if click < 0.25:
             self.__mouse.release(Button.left)
             self.__mouse.release(Button.right)
             self.__leftButton, self.__rightButton = False, False
-        elif click == 1:
+        elif click < 0.5:
             self.__mouse.press(Button.left)
             self.__mouse.release(Button.right)
             self.__leftButton, self.__rightButton = True, False
-        elif click == 2:
+        elif click < 0.75:
             self.__mouse.release(Button.left)
             self.__mouse.press(Button.right)
             self.__leftButton, self.__rightButton = False, True
@@ -51,9 +51,9 @@ class MouseManager:
             self.__mouse.press(Button.right)
             self.__leftButton, self.__rightButton = True, True
 
-    def MoveClick(self, x, y, click: Literal[0, 1, 2, 3]):
-        pyautogui.moveTo(x, y)
+    def MoveClick(self, x, y, click):
         self.MouseClick(click)
+        self.MouseMove(x, y)
 
     def MouseMove(self, x, y, t=0.05):
         time.sleep(0.005)

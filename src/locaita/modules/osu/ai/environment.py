@@ -26,8 +26,7 @@ class Environment:
         self.downscaled_playarea = tuple(self.downscaled_playarea)
 
         self.control_space = 4
-        self.action_space: spaces.Discrete = spaces.Discrete(
-            self.playarea["width"] * self.playarea["height"] * self.control_space)
+        self.action_space = spaces.Box(low=0, high=1, shape=(3, ))
 
         self.previous_score = torch.tensor(0, dtype=torch.float32)
         self.previous_accuracy = torch.tensor(100, dtype=torch.float32)
@@ -42,15 +41,16 @@ class Environment:
             retries += 1
 
     def PerformAction(self, action: torch.Tensor):
-        click, xy = divmod(action.item(), int(
-            self.action_space.n // self.control_space))
-        y, x = divmod(xy, self.playarea["width"])
+        x, y, click = action[0].tolist()
 
         self.mouse_manager.MoveClick(
-            int(x + self.playarea["left"]), int(y + self.playarea["top"]), int(click))
+            int(x * self.playarea["width"] + self.playarea["left"]), int(y * self.playarea["height"] + self.playarea["top"]), click)
 
         left, right = self.mouse_manager.ButtonsState
-        return torch.tensor([[left, right, x / self.playarea["width"], y / self.playarea["height"]]], dtype=torch.float32)
+        return torch.tensor([[left, right, x, y]], dtype=torch.float32)
+
+    def RandomAction(self):
+        return torch.tensor([self.action_space.sample()])
 
     def Step(self, action: torch.Tensor):
         new_controls = self.PerformAction(action)
@@ -66,8 +66,8 @@ class Environment:
     def Reset(self):
         self.mouse_manager.ResetButtons()
         self.beatmap_manager.ToBeatmapList()
-        self.beatmap_manager.ClearMods()
-        self.beatmap_manager.SelectMods([ModsHotkeys.NF])
+        """ self.beatmap_manager.ClearMods()
+        self.beatmap_manager.SelectMods([ModsHotkeys.NF]) """
         self.beatmap_manager.SearchMaps(stars={"s_from": 1, "s_to": 2, "full_range": True},
                                         length={"s_from": 90, "s_to": 180, "full_range": False})
         self.beatmap_manager.ShuffleMaps()
@@ -83,12 +83,5 @@ class Environment:
     def ResetAfter(self):
         self.beatmap_manager.BackToBeatmapList()
 
-    def GetReward(self, score, accuracy):
-        if accuracy > self.previous_accuracy:
-            bonus = torch.tensor(0.3)
-        elif accuracy < self.previous_accuracy:
-            bonus = torch.tensor(-0.3)
-        else:
-            bonus = torch.tensor(0.1)
-        return torch.clamp(0.1*torch.log10(max((score - self.previous_score),
-                                           torch.tensor(1.0))) + bonus, -1, 1)
+    def GetReward(self, curr_score, curr_acc):
+        pass

@@ -1,13 +1,15 @@
 import gc
 import os
+import shutil
 import threading
+from time import sleep
+import traceback
 import subprocess
-from random import random
 
 import torch
 from locaita.log.logger import Logger
-from locaita.modules.osu.ai.agent import DDQN
 from locaita.modules.osu.context import Context
+from locaita.modules.osu.ai.agent import OsuAgent
 from locaita.modules.osu.states import PlayerState
 from locaita.modules.osu.ai.environment import Environment
 
@@ -15,6 +17,21 @@ from locaita.modules.osu.ai.environment import Environment
 class OsuModule:
     def __init__(self):
         pass
+
+    def Clear(self):
+        Logger.Info("Clearing memory, checkpoints, tensorboard events")
+        try:
+            shutil.rmtree("memory")
+        except Exception as e:
+            Logger.Error(f"Error occured while clearing memory: {e} / {traceback.format_exc()}")
+        try:
+            shutil.rmtree("tensorboard")
+        except Exception as e:
+            Logger.Error(f"Error occured while clearing tensorboard events: {e} / {traceback.format_exc()}")
+        try:
+            shutil.rmtree("weights")
+        except Exception as e:
+            Logger.Error(f"Error occured while clearing weights checkpoints: {e} / {traceback.format_exc()}")
 
     def StartGame(self):
         osu_path = os.getenv("OSU_PATH", "external/osu_game")
@@ -44,64 +61,49 @@ class OsuModule:
         return sum(p.numel() for p in model.parameters())
 
     def Learn(self):
+        Logger.Info("Training will start in 10 seconds")
+        sleep(10)
         with Context() as ctx:
-            MAPS_COUNT = 0
+            MAPS_COUNT = 50
 
             env = Environment(ctx)
-            agent = DDQN(ctx, env, inference=False)
+            agent = OsuAgent(ctx, env, inference=False)
 
-            """ 
-                For osu! window with resolution of 1280x720 and downscale multiplier of 15
-                there is 4.878.144.448 parameters. Not very good action space optimization
-                if using discrete actions space. Consider move to predict mu and sigma for
-                Normal distibution on screen
-            """
             Logger.Info(
-                f"Parameters count: {self.__params_count(agent.network) + self.__params_count(agent.target_network)}")
+                f"Window info: {ctx.ScreenCTX.WindowProperties["window"]}")
+            Logger.Info(
+                f"Play area info: {ctx.ScreenCTX.WindowProperties["play_area"]}")
+            policy_count = self.__params_count(agent.policy_network)
+            Logger.Info(
+                f"Parameters count for train: {policy_count + self.__params_count(agent.value_network) + self.__params_count(agent.value_target_network) + self.__params_count(agent.q_value_network1) + self.__params_count(agent.q_value_network2)}")
 
             steps = 0
-            best_reward = -999999999.9
-            epsilon = agent.hyperparams["epsilon_init"]
-            epsilon_decay = agent.hyperparams["epsilon_decay"]
-            epsilon_min = agent.hyperparams["epsilon_min"]
+            thread = None
             for _ in range(MAPS_COUNT):
                 state, controls_state = env.Reset()
-                episode_reward = 0.0
                 while ctx.GameCTX.GameState["state"] == PlayerState.PLAYING:
-                    if steps > agent.hyperparams["min_experience"]:
-                        if random() > epsilon:
-                            with torch.no_grad():
-                                action = agent.SelectAction(
-                                    state, controls_state)
-                        else:
-                            action = torch.tensor(
-                                [env.action_space.sample()])
-                    else:
-                        action = torch.tensor([env.action_space.sample()])
-
-                    new_state, new_controls_state, reward = env.Step(action)
-
-                    episode_reward += reward.item()
+                    with torch.no_grad():
+                        action = agent.SelectAction(
+                            state, controls_state)
+                        new_state, new_controls_state, reward = env.Step(action)
 
                     agent.memory.Push(state, action, reward, new_state,
                                       controls_state, new_controls_state)
+
+                    if thread != None and thread.is_alive():
+                        thread.join()
+                    thread = threading.Thread(target=agent.Optimize)
+                    thread.start()
 
                     state = new_state
                     controls_state = new_controls_state
 
                     steps += 1
 
-                epsilon = max(epsilon * epsilon_decay, epsilon_min)
                 env.ResetAfter()
                 Logger.Info(
-                    f"Map ended. Steps performed: {steps}, episode reward: {episode_reward}")
-
-                agent.Optimize()
-                if steps % agent.hyperparams["steps_to_sync"] == 0:
-                    agent.ReplaceTarget()
+                    f"Map ended. Steps performed: {steps}")
 
                 gc.collect()
 
-                if episode_reward > best_reward:
-                    agent.Save()
-                    best_reward = episode_reward
+                agent.Save()

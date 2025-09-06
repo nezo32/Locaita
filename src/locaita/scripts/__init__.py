@@ -1,9 +1,11 @@
 import os
 from pathlib import Path
+import threading
 import dotenv
 import signal
 import traceback
 from abc import ABC, abstractmethod
+from pynput import keyboard
 
 from locaita.log.logger import Logger
 from locaita.utils.threads import ClearAllThreads
@@ -53,6 +55,7 @@ class CallableScript(ABC):
     def Start(self):
         with ShutdownController():
             try:
+
                 self._start()
             except KeyboardInterrupt:
                 Logger.Info("Interrupted by user (KeyboardInterrupt)")
