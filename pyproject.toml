@@ -83,4 +83,6 @@ explicit = true
 osu = "locaita.scripts.osu.launch:main"
 osu-train = "locaita.scripts.osu.train:main"
 osu-clear = "locaita.scripts.osu.clear:main"
+osu-inference = "locaita.scripts.osu.inference:main"
+
 

@@ -55,19 +55,28 @@ class OsuModule:
                 "Error: 'dotnet' command not found. Ensure .NET is installed")
 
     def Inference(self):
-        raise NotImplementedError()
+        with Context() as ctx:
+            env = Environment(ctx)
+            agent = OsuAgent(ctx, env, inference=True)
+            state, controls_state = env.Reset()
+            while ctx.GameCTX.GameState["state"] == PlayerState.PLAYING:
+                with torch.no_grad():
+                    action = agent.SelectAction(
+                        state, controls_state)
+                    env.Step(action)
 
     def __params_count(self, model: torch.nn.Module):
         return sum(p.numel() for p in model.parameters())
 
     def Learn(self):
-        Logger.Info("Training will start in 10 seconds")
-        sleep(10)
+        Logger.Info("Training will start in 5 seconds")
+        sleep(5)
         with Context() as ctx:
             MAPS_COUNT = 50
 
             env = Environment(ctx)
             agent = OsuAgent(ctx, env, inference=False)
+            agent.Load(downgrade=True)
 
             Logger.Info(
                 f"Window info: {ctx.ScreenCTX.WindowProperties["window"]}")
@@ -77,10 +86,10 @@ class OsuModule:
             Logger.Info(
                 f"Parameters count for train: {policy_count + self.__params_count(agent.value_network) + self.__params_count(agent.value_target_network) + self.__params_count(agent.q_value_network1) + self.__params_count(agent.q_value_network2)}")
 
-            steps = 0
-            thread = None
             for _ in range(MAPS_COUNT):
                 state, controls_state = env.Reset()
+
+                steps = 0
                 while ctx.GameCTX.GameState["state"] == PlayerState.PLAYING:
                     with torch.no_grad():
                         action = agent.SelectAction(
@@ -90,19 +99,15 @@ class OsuModule:
                     agent.memory.Push(state, action, reward, new_state,
                                       controls_state, new_controls_state)
 
-                    if thread != None and thread.is_alive():
-                        thread.join()
-                    thread = threading.Thread(target=agent.Optimize)
-                    thread.start()
-
                     state = new_state
                     controls_state = new_controls_state
 
                     steps += 1
-
                 env.ResetAfter()
                 Logger.Info(
                     f"Map ended. Steps performed: {steps}")
+
+                agent.Optimize(loops=steps)
 
                 gc.collect()
 

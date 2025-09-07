@@ -66,10 +66,11 @@ class Environment:
     def Reset(self):
         self.mouse_manager.ResetButtons()
         self.beatmap_manager.ToBeatmapList()
+        """ UNSTABLE """
         """ self.beatmap_manager.ClearMods()
         self.beatmap_manager.SelectMods([ModsHotkeys.NF]) """
-        self.beatmap_manager.SearchMaps(stars={"s_from": 1, "s_to": 2, "full_range": True},
-                                        length={"s_from": 90, "s_to": 180, "full_range": False})
+        self.beatmap_manager.SearchMaps(stars={"s_from": 1, "s_to": 3, "full_range": True},
+                                        length={"s_from": 0, "s_to": 150, "full_range": False})
         self.beatmap_manager.ShuffleMaps()
         self.beatmap_manager.EnterMap()
         self.__wait_for_state(PlayerState.PLAYING)
@@ -83,5 +84,13 @@ class Environment:
     def ResetAfter(self):
         self.beatmap_manager.BackToBeatmapList()
 
-    def GetReward(self, curr_score, curr_acc):
-        pass
+    def GetReward(self, score: torch.Tensor, accuracy: torch.Tensor):
+        delta_score = score - self.previous_score
+        score_reward = delta_score / 100_000
+
+        delta_accuracy = accuracy - self.previous_accuracy
+        accuracy_reward = delta_accuracy * 1.5
+
+        reward = score_reward + accuracy_reward - 0.1
+
+        return reward.clip(0.0, 1.0)

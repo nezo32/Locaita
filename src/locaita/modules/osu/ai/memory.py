@@ -13,7 +13,7 @@ class ReplayBuffer:
         self.memory = []
         self.position = 0
 
-    def Push(self, *args):
+    def Push(self, *args: torch.Tensor):
         if len(self.memory) < self.capacity:
             self.memory.append(None)
         self.memory[self.position] = Transition(args[0].squeeze(0), args[1].squeeze(

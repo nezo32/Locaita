@@ -6,3 +6,4 @@ tensorboard/events*
 *.exe
 *.log
 .env.local
+weights/*

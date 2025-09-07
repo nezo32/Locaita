@@ -87,8 +87,7 @@ class OsuAgent(BaseAgent):
         Logger.Info("Initizalizing agent")
         (width, height) = ctx.ScreenCTX.WindowProperties["downscaled_play_area"]
         self.policy_network = PolicyNetwork(
-            width=width, height=height, controls=env.control_space, actions=env.action_space.shape[0],
-            action_bounds=[env.action_space.low[0], env.action_space.high[1]]).to(device)
+            width=width, height=height, controls=env.control_space, actions=env.action_space.shape[0]).to(device)
 
         # init test
         output = self.policy_network(torch.from_numpy(ctx.ScreenCTX.ScreenData).unsqueeze_(0).to(
@@ -109,6 +108,10 @@ class OsuAgent(BaseAgent):
             self.q_value1_opt = Adam(self.q_value_network1.parameters(), lr=self.hyperparams["learning_rate"])
             self.q_value2_opt = Adam(self.q_value_network2.parameters(), lr=self.hyperparams["learning_rate"])
             self.policy_opt = Adam(self.policy_network.parameters(), lr=self.hyperparams["learning_rate"])
+
+            self.log_alpha = torch.zeros(1, requires_grad=True, device=device)
+            self.alpha_opt = torch.optim.Adam([self.log_alpha], lr=1e-4)
+            self.target_entropy = -env.action_space.shape[0]
 
             self.step = 0
 
@@ -144,17 +147,24 @@ class OsuAgent(BaseAgent):
             "value": {
                 "opt": self.value_opt.state_dict(),
                 "model": self.value_target_network.state_dict(),
-            }
+            },
+            "alpha": self.alpha_opt.state_dict()
         }, os.path.join(self.hyperparams['weights_path'], self.GetFileName("pt")))
         """ self.memory.Save(os.path.join(
             self.hyperparams['memory_path'], self.GetFileName("pck"))) """
         Logger.Info(f"Data successfully saved")
 
-    def Load(self, downgrade=False):
+    def Load(self, downgrade=False, load_optmizers=True):
         if downgrade:
             self.version -= 1
 
-        Logger.Info(f"Loading saved data version {self.LastVersion}")
+        Logger.Info(f"Loading saved data version {self.LastVersion} at {os.path.join(
+            self.hyperparams['weights_path'], self.GetFileName("pt"))}")
+
+        if not os.path.exists(os.path.join(
+                self.hyperparams['weights_path'], self.GetFileName("pt"))):
+            Logger.Warning("No saved data found")
+            return
 
         state = torch.load(os.path.join(
             self.hyperparams['weights_path'], self.GetFileName("pt")), weights_only=True)
@@ -169,9 +179,11 @@ class OsuAgent(BaseAgent):
             self.value_network.load_state_dict(state["value"]["model"])
             self.value_target_network.load_state_dict(state["value"]["model"])
 
-            self.q_value1_opt.load_state_dict(state["q_value_1"]["opt"])
-            self.q_value2_opt.load_state_dict(state["q_value_2"]["opt"])
-            self.value_opt.load_state_dict(state["value"]["opt"])
+            if load_optmizers:
+                self.q_value1_opt.load_state_dict(state["q_value_1"]["opt"])
+                self.q_value2_opt.load_state_dict(state["q_value_2"]["opt"])
+                self.value_opt.load_state_dict(state["value"]["opt"])
+                self.alpha_opt.load_state_dict(state["alpha"])
 
             """ self.memory = ReplayBuffer.Load(os.path.join(
                 self.hyperparams['memory_path'], self.GetFileName("pck"))) """
@@ -186,63 +198,84 @@ class OsuAgent(BaseAgent):
             state.to(device), controls_state.to(device))
         return action.cpu()
 
-    def Optimize(self):
+    def Optimize(self, loops: int):
         if len(self.memory) < self.hyperparams["min_experience"]:
             return
 
-        state, action, reward, new_state, control_state, new_control_state = self.memory.Sample(
-            self.hyperparams["batch_size"])
+        for _ in range(loops):
+            state, action, reward, new_state, control_state, new_control_state = self.memory.Sample(
+                self.hyperparams["batch_size"])
 
-        state = state.to(device)
-        action = action.to(device)
-        reward = reward.to(device).unsqueeze(1)
-        new_state = new_state.to(device)
-        control_state = control_state.to(device)
-        new_control_state = new_control_state.to(device)
+            state = state.to(device)
+            action = action.to(device)
+            reward = reward.to(device).unsqueeze(1)
+            new_state = new_state.to(device)
+            control_state = control_state.to(device)
+            new_control_state = new_control_state.to(device)
 
-        reparam_actions, log_probs = self.policy_network.sample_or_likelihood(state, control_state)
+            reparam_actions, log_probs = self.policy_network.sample_or_likelihood(state, control_state)
 
-        q1 = self.q_value_network1(state, control_state, reparam_actions)
-        q2 = self.q_value_network2(state, control_state, reparam_actions)
-        q = torch.min(q1, q2)
+            alpha_loss = -(self.log_alpha * (log_probs.detach() + self.target_entropy)).mean()
 
-        target_value = q.detach() - self.hyperparams["alpha"] * log_probs.detach()
-        value = self.value_network(state, control_state)
-        value_loss = self.value_loss(value, target_value)
+            self.alpha_opt.zero_grad()
+            alpha_loss.backward()
+            self.alpha_opt.step()
 
-        with torch.no_grad():
-            target_q = self.hyperparams["reward_scale"] * reward + \
-                self.hyperparams["reward_gamma"] * self.value_target_network(new_state, new_control_state)
+            alpha = self.log_alpha.exp()
 
-        q1 = self.q_value_network1(state, control_state, action)
-        q2 = self.q_value_network2(state, control_state, action)
-        q1_loss = self.q_value_loss(q1, target_q)
-        q2_loss = self.q_value_loss(q2, target_q)
-        policy_loss = (self.hyperparams["alpha"] * log_probs - q).mean()
+            q1 = self.q_value_network1(state, control_state, reparam_actions)
+            q2 = self.q_value_network2(state, control_state, reparam_actions)
+            q = torch.min(q1, q2)
 
-        self.policy_opt.zero_grad()
-        policy_loss.backward()
-        self.policy_opt.step()
+            target_value = q.detach() - alpha.detach() * log_probs.detach()
+            value = self.value_network(state, control_state)
+            value_loss = self.value_loss(value, target_value)
 
-        self.value_opt.zero_grad()
-        value_loss.backward()
-        self.value_opt.step()
+            with torch.no_grad():
+                target_q = self.hyperparams["reward_scale"] * reward + \
+                    self.hyperparams["reward_gamma"] * self.value_target_network(new_state, new_control_state)
 
-        self.q_value1_opt.zero_grad()
-        q1_loss.backward()
-        self.q_value1_opt.step()
+            q1 = self.q_value_network1(state, control_state, action)
+            q2 = self.q_value_network2(state, control_state, action)
+            q1_loss = self.q_value_loss(q1, target_q)
+            q2_loss = self.q_value_loss(q2, target_q)
+            policy_loss = (alpha.detach() * log_probs - q).mean()
 
-        self.q_value2_opt.zero_grad()
-        q2_loss.backward()
-        self.q_value2_opt.step()
+            self.policy_opt.zero_grad()
+            policy_loss.backward()
+            self.policy_opt.step()
 
-        self.soft_update_target_network(self.value_network, self.value_target_network)
-        with torch.no_grad():
-            self.summary_writer.add_scalar(
-                f"loss-{self.GetFileName()}", torch.mean(policy_loss), self.step)
-            self.summary_writer.add_scalar(
-                f"rewards-{self.GetFileName()}", torch.mean(reward), self.step)
-            self.step += 1
+            self.value_opt.zero_grad()
+            value_loss.backward()
+            self.value_opt.step()
+
+            self.q_value1_opt.zero_grad()
+            q1_loss.backward()
+            self.q_value1_opt.step()
+
+            self.q_value2_opt.zero_grad()
+            q2_loss.backward()
+            self.q_value2_opt.step()
+
+            self.soft_update_target_network(self.value_network, self.value_target_network)
+            with torch.no_grad():
+                self.summary_writer.add_scalar(
+                    f"{self.GetFileName()}/policy-loss", torch.mean(policy_loss), self.step)
+                self.summary_writer.add_scalar(
+                    f"{self.GetFileName()}/value-loss", torch.mean(value_loss), self.step)
+                self.summary_writer.add_scalar(
+                    f"{self.GetFileName()}/q1-loss", torch.mean(q1_loss), self.step)
+                self.summary_writer.add_scalar(
+                    f"{self.GetFileName()}/q2-loss", torch.mean(q2_loss), self.step)
+                self.summary_writer.add_scalar(
+                    f"{self.GetFileName()}/alpha-loss", torch.mean(alpha_loss), self.step)
+                self.summary_writer.add_scalar(
+                    f"{self.GetFileName()}/rewards", torch.mean(reward), self.step)
+                self.summary_writer.add_histogram(
+                    f"{self.GetFileName()}/actions", reparam_actions, self.step)
+                self.summary_writer.add_histogram(
+                    f"{self.GetFileName()}/log_probs", log_probs, self.step)
+                self.step += 1
 
     @staticmethod
     def soft_update_target_network(local_network: torch.nn.Module, target_network: torch.nn.Module, tau=0.005):
