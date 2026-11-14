@@ -7,3 +7,4 @@ tensorboard/events*
 *.log
 .env.local
 weights/*
+.env
